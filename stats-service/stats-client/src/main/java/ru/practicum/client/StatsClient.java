@@ -75,9 +75,7 @@ public class StatsClient {
             List<String> uris = statsRequest.getUris();
 
             if (uris != null && !uris.isEmpty()) {
-                for (String uri : uris) {
-                    builder.queryParam("uris", uri);
-                }
+                builder.queryParam("uris", uris);
             }
 
             URI uri = builder.encode().build().toUri();
