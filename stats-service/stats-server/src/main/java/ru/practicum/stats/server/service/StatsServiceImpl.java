@@ -14,23 +14,25 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository repository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
                                        List<String> uris, boolean unique) {
-        if (start.isAfter(end))
+        if (start.isAfter(end) || start.isEqual(end)) {
             throw new BadRequestException("Неправильно заданное время");
+        }
+
         if (uris != null && !uris.isEmpty()) {
-            if (unique)
-                return repository.getStatsByUriWithUniqueIp(start, end, uris);
-            return repository.getStatsByUri(start, end, uris);
+            return unique
+                    ? repository.getStatsByUriWithUniqueIp(start, end, uris)
+                    : repository.getStatsByUri(start, end, uris);
         } else {
-            if (unique)
-                return repository.getStatsWithUniqueIp(start, end);
-            return repository.getStats(start, end);
+            return unique
+                    ? repository.getStatsWithUniqueIp(start, end)
+                    : repository.getStats(start, end);
         }
     }
 
