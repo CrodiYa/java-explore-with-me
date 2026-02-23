@@ -14,8 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class EndpointHitDto {
 
-    private Long id;
-
     @NotBlank
     private String app;
 
