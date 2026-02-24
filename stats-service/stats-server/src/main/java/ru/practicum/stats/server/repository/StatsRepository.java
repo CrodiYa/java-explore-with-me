@@ -10,44 +10,48 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface StatsRepository extends JpaRepository<EndpointHit, Long> {
-    // возвращаем стату по уникальному ip и конкретным uri
+    // возвращаем статистику по уникальному ip и конкретным uri
     @Query("""
-            select new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, count(distinct(hit.ip)))
-            from EndpointHit as hit
-            where hit.createDate BETWEEN :start AND :end AND hit.uri IN :uris
-            group by hit.app, hit.uri
+            SELECT new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, COUNT(DISTINCT(hit.ip)) as count)
+            FROM EndpointHit as hit
+            WHERE hit.createDate BETWEEN :start AND :end AND hit.uri IN :uris
+            GROUP BY hit.app, hit.uri
+            ORDER BY count desc
             """)
     List<ViewStatsDto> getStatsByUriWithUniqueIp(@Param("start") LocalDateTime start,
                                                  @Param("end") LocalDateTime end,
                                                  @Param("uris") List<String> uris);
 
-    // возвращаем стату по уникальному ip
+    // возвращаем статистику по уникальному ip
     @Query("""
-            select new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, count(distinct(hit.ip)))
-            from EndpointHit as hit
-            where hit.createDate BETWEEN :start AND :end
-            group by hit.app, hit.uri
+            SELECT new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, COUNT(DISTINCT(hit.ip)) as count)
+            FROM EndpointHit as hit
+            WHERE hit.createDate BETWEEN :start AND :end
+            GROUP BY hit.app, hit.uri
+            ORDER BY count desc
             """)
     List<ViewStatsDto> getStatsWithUniqueIp(@Param("start") LocalDateTime start,
                                             @Param("end") LocalDateTime end);
 
-    // возвращаем стату по конкретным uri
+    // возвращаем статистику по конкретным uri
     @Query("""
-            select new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, count(hit))
-            from EndpointHit as hit
-            where hit.createDate BETWEEN :start AND :end AND hit.uri IN :uris
-            group by hit.app, hit.uri
+            SELECT new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, COUNT(hit) as count)
+            FROM EndpointHit as hit
+            WHERE hit.createDate BETWEEN :start AND :end AND hit.uri IN :uris
+            GROUP BY hit.app, hit.uri
+            ORDER BY count desc
             """)
     List<ViewStatsDto> getStatsByUri(@Param("start") LocalDateTime start,
                                      @Param("end") LocalDateTime end,
                                      @Param("uris") List<String> uris);
 
-    // возвращаем стату с начала до конца какого то времени
+    // возвращаем статистику с начала до конца какого то времени
     @Query("""
-            select new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, count(hit))
-            from EndpointHit as hit
-            where hit.createDate BETWEEN :start AND :end
-            group by hit.app, hit.uri
+            SELECT new ru.practicum.dto.ViewStatsDto(hit.app, hit.uri, COUNT(hit) as count)
+            FROM EndpointHit as hit
+            WHERE hit.createDate BETWEEN :start AND :end
+            GROUP BY hit.app, hit.uri
+            ORDER BY count desc
             """)
     List<ViewStatsDto> getStats(@Param("start") LocalDateTime start,
                                 @Param("end") LocalDateTime end);

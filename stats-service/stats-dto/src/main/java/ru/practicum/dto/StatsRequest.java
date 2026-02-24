@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+import static ru.practicum.dto.Formatter.PATTERN;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -18,11 +20,11 @@ import java.util.List;
 public class StatsRequest {
 
     @NotNull
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = PATTERN)
     private String start;
 
     @NotNull
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = PATTERN)
     private String end;
 
     private List<String> uris;

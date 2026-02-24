@@ -13,24 +13,24 @@ import ru.practicum.stats.server.service.StatsService;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static ru.practicum.dto.Formatter.PATTERN;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
 public class StatsController {
     private final StatsService statsService;
-    private static final String TIME_PATTERN = "yyyy-MM-dd HH:mm:ss";
 
     @PostMapping("/hit")
     @ResponseStatus(HttpStatus.CREATED)
-    public String saveHit(@RequestBody @Valid EndpointHitDto endpointHitDto) {
+    public EndpointHitDto saveHit(@RequestBody @Valid EndpointHitDto endpointHitDto) {
         log.info("На uri: {} сервиса был отправлен запрос пользователем.", endpointHitDto.getUri());
-        statsService.saveHit(endpointHitDto);
-        return "Информация сохранена";
+        return statsService.saveHit(endpointHitDto);
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> getStats(@RequestParam @DateTimeFormat(pattern = TIME_PATTERN) LocalDateTime start,
-                                       @RequestParam @DateTimeFormat(pattern = TIME_PATTERN) LocalDateTime end,
+    public List<ViewStatsDto> getStats(@RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime start,
+                                       @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime end,
                                        @RequestParam(required = false) List<String> uris,
                                        @RequestParam(defaultValue = "false") boolean unique) {
         log.info("Поступил запрос на получение статистики запросов c параметрами start: {}, end {}, uris {}, unique {}",
