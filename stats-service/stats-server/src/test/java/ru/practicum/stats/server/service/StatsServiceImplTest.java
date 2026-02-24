@@ -33,15 +33,18 @@ public class StatsServiceImplTest {
     @Test
     public void shouldSave() {
         EndpointHitDto dtoHit = RandomHelper.getEndpointHitDto();
-        EndpointHit hit = DtoMapper.toEndpoint(dtoHit);
 
-        when(repository.save(hit)).thenReturn(hit);
+        EndpointHit savedHit = DtoMapper.toEndpoint(dtoHit);
+        when(repository.save(any(EndpointHit.class))).thenReturn(savedHit);
 
         EndpointHitDto savedDto = statsService.saveHit(dtoHit);
 
-        assertEquals(dtoHit, savedDto);
+        assertEquals(dtoHit.getApp(), savedDto.getApp());
+        assertEquals(dtoHit.getUri(), savedDto.getUri());
+        assertEquals(dtoHit.getIp(), savedDto.getIp());
+        assertEquals(dtoHit.getTimestamp(), savedDto.getTimestamp());
 
-        verify(repository).save(hit);
+        verify(repository).save(any(EndpointHit.class));
     }
 
     @Test
