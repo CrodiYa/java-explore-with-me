@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@EqualsAndHashCode
 @Builder(toBuilder = true)
 public class EndpointHit {
 
