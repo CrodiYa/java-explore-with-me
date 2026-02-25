@@ -8,6 +8,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -43,6 +45,13 @@ public class GlobalExceptionHandler {
         });
 
         return createBadRequest(request.getRequestURI(), errors);
+    }
+
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HandlerMethodValidationException.class})
+    public ResponseEntity<ApiError> handleMismatchViolation(Exception ex, HttpServletRequest request) {
+
+        logInfo(ex, request);
+        return createBadRequest(request.getRequestURI(), Map.of("error", ex.getMessage()));
     }
 
     @ExceptionHandler(NotFoundException.class)
