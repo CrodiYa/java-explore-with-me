@@ -19,7 +19,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAnyException(MethodArgumentNotValidException ex,
+    public ResponseEntity<ApiError> handleAnyException(Exception ex,
                                                        HttpServletRequest request) {
         log.error("Request: [{}]", request, ex);
 
