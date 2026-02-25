@@ -5,8 +5,6 @@ import lombok.*;
 
 @Entity
 @Table(name = "category", schema = "public")
-//@Table(name = "category", uniqueConstraints = {
-//        @UniqueConstraint(name = "UQ_CATEGORY_NAME", columnNames = "name")})
 @Builder
 @Getter
 @Setter
@@ -18,6 +16,6 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
 }
