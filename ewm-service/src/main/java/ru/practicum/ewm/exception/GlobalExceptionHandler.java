@@ -60,8 +60,8 @@ public class GlobalExceptionHandler {
         return createBadRequest(request.getRequestURI(), Collections.singletonMap("error", ex.getMessage()));
     }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiError> handleDataIntegrityViolationException(ConstraintViolationException ex,
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolationException(ConflictException ex,
                                                                           HttpServletRequest request) {
         logInfo(ex, request);
         return createBadRequest(request.getRequestURI(), Collections.singletonMap("error", ex.getMessage()));
