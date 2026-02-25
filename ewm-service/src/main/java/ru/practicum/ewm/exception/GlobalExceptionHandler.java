@@ -61,10 +61,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiError> handleDataIntegrityViolationException(ConflictException ex,
+    public ResponseEntity<ApiError> handleConflictException(ConflictException ex,
                                                                           HttpServletRequest request) {
         logInfo(ex, request);
-        return createBadRequest(request.getRequestURI(), Collections.singletonMap("error", ex.getMessage()));
+        return createResponseEntity(
+                               HttpStatus.CONFLICT,
+                              request.getRequestURI(),
+                           Collections.singletonMap("error", ex.getMessage()));
     }
 
     private ResponseEntity<ApiError> createResponseEntity(HttpStatus status, String path, Map<String, String> errors) {
