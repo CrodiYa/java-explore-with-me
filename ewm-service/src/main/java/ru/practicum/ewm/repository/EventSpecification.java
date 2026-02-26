@@ -46,8 +46,12 @@ public class EventSpecification implements Specification<Event> {
             predicates.add(root.get("category").get("id").in(categories));
         }
 
-        if (rangeStart != null && rangeEnd != null) {
-            predicates.add(cb.between(root.get("eventDate"), rangeStart, rangeEnd));
+        if (rangeStart != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
+        }
+
+        if (rangeEnd != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("eventDate"), rangeEnd));
         }
 
         if (predicates.isEmpty()) {

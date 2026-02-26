@@ -137,7 +137,7 @@ public class EventMapper {
     public static EventState mapAdminEventAction(EventStateAction action) {
         return switch (action) {
             case PUBLISH_EVENT -> EventState.PUBLISHED;
-            case REJECT_EVENT -> EventState.REJECT;
+            case REJECT_EVENT -> EventState.CANCELED;
             case null, default -> null;
         };
     }

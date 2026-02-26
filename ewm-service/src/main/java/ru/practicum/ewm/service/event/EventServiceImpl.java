@@ -37,12 +37,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<EventFullDto> findEvents(List<Long> users, List<EventState> states, List<Long> categories,
                                          String rangeStart, String rangeEnd, Integer from, Integer size) {
-        Instant start = null;
-        Instant end = null;
 
-        if (rangeStart != null && rangeEnd != null) {
-            start = toInstant(rangeStart);
-            end = toInstant(rangeEnd);
+        Instant start = getRangeInstant(rangeStart);
+        Instant end = getRangeInstant(rangeEnd);
+
+        if (start != null && end != null) {
             if (start.isAfter(end)) {
                 throw new BadRequestException("Start can`t be after end");
             }
@@ -169,5 +168,14 @@ public class EventServiceImpl implements EventService {
             throw new ConflictException("Conflict with another event");
         }
     }
+
+    private Instant getRangeInstant(String date) {
+        if (date != null) {
+            return toInstant(date);
+        }
+
+        return null;
+    }
+
 
 }

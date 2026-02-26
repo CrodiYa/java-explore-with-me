@@ -59,7 +59,7 @@ public class Event {
     @Column(name = "request_moderation", nullable = false)
     private Boolean requestModeration;
 
-    @Column(name = "published_on", nullable = false)
+    @Column(name = "published_on")
     private Instant publishedOn;
 
     @Column(name = "created_on", nullable = false)
