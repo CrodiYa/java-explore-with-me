@@ -35,17 +35,23 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto findById(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
+        Category category = findEntityById(id);
 
         return CategoryMapper.toDto(category);
     }
 
     @Override
+    public Category findEntityById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
+    }
+
+
+    @Override
     public CategoryDto addCategory(CategoryDtoRequest request) {
         try {
             Category category = categoryRepository.save(CategoryMapper.toCategory(request));
-            log.info("Successfully saved [{}]", category);
+            log.info("Successfully saved category with id: {}", category.getId());
             return CategoryMapper.toDto(category);
         } catch (ConstraintViolationException e) {
             log.debug("Conflict during saving category [{}]", request, e);
@@ -59,7 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
             Category category = categoryRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
 
-            log.info("Successfully patched [{}]", category);
+            log.info("Successfully patched category with id: {}", category.getId());
             CategoryMapper.merge(category, request);
 
             return CategoryMapper.toDto(categoryRepository.save(category));
@@ -81,6 +87,13 @@ public class CategoryServiceImpl implements CategoryService {
         } catch (ConstraintViolationException e) {
             log.debug("Conflict during deleting category with id [{}]", id, e);
             throw new ConflictException("Some events have this category");
+        }
+    }
+
+    @Override
+    public void throwIfCategoryNotFound(Long categoryId) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new NotFoundException("Category with id " + categoryId + " not found");
         }
     }
 }

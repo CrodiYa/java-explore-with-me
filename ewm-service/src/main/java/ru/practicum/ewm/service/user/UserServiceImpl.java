@@ -26,6 +26,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     @Override
+    public User findEntityById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
+    }
+
+    @Override
     public List<UserDto> getUsers(List<Long> ids, int from, int size) {
         Pageable pageable = PageRequest.of(from / size, size);
 
@@ -64,5 +70,12 @@ public class UserServiceImpl implements UserService {
 
         userRepository.deleteById(userId);
         log.info("Удалён пользователь: id={}", userId);
+    }
+
+    @Override
+    public void throwIfUserNotFound(Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id " + userId + " not found");
+        }
     }
 }
