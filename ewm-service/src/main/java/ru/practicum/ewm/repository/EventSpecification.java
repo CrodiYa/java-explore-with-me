@@ -51,7 +51,7 @@ public class EventSpecification implements Specification<Event> {
         }
 
         if (rangeEnd != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("eventDate"), rangeEnd));
+            predicates.add(cb.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
         }
 
         if (predicates.isEmpty()) {
