@@ -143,6 +143,10 @@ public class EventServiceImpl implements EventService {
                 event.setState(newState);
             }
 
+            if (event.getState().equals(EventState.PUBLISHED)) {
+                event.setPublishedOn(Instant.now());
+            }
+
             if (request.getCategory() != null) {
                 Category category = categoryService.findEntityById(request.getCategory());
                 event.setCategory(category);

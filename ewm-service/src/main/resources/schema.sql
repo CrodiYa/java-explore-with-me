@@ -17,15 +17,15 @@ CREATE TABLE IF NOT EXISTS event (
     description VARCHAR(7000),
     lat DECIMAL(10,6) NOT NULL,
     lon DECIMAL(10,6) NOT NULL,
-    event_date TIMESTAMP NOT NULL,
+    event_date TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     category_id BIGINT NOT NULL,
     initiator_id BIGINT NOT NULL,
     paid BOOLEAN DEFAULT FALSE,
     state VARCHAR(50) NOT NULL,
     participant_limit INT,
     request_moderation BOOLEAN DEFAULT FALSE,
-    published_on TIMESTAMP,
-    created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    published_on TIMESTAMP WITHOUT TIME ZONE,
+    created_on TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (initiator_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES category(id)
 );
