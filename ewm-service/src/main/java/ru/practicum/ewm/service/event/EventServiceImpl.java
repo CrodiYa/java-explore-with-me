@@ -43,6 +43,9 @@ public class EventServiceImpl implements EventService {
         if (rangeStart != null && rangeEnd != null) {
             start = toInstant(rangeStart);
             end = toInstant(rangeEnd);
+            if (start.isAfter(end)) {
+                throw new BadRequestException("Start can`t be after end");
+            }
         }
 
         EventSpecification spec = new EventSpecification(users, states, categories, start, end);

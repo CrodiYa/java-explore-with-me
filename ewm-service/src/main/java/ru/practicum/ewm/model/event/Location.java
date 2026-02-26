@@ -13,6 +13,6 @@ public record Location(
 
         @NotNull(groups = OnCreate.class)
         @DecimalMin(value = "-180", message = "Longitude must be between -180 and 180")
-        @DecimalMax(value = "180", message = "Longitude must be between -180 and 180 ")
+        @DecimalMax(value = "180", message = "Longitude must be between -180 and 180")
         Double lon) {
 }

@@ -38,7 +38,7 @@ public class AdminEventController {
     }
 
     @PatchMapping("/{eventId}")
-    public EventFullDto findEvents(@PathVariable @Positive Long eventId,
+    public EventFullDto patchEvent(@PathVariable @Positive Long eventId,
                                    @RequestBody @Validated(OnUpdate.class) EventDtoRequest request) {
 
         return eventService.patchAdminEvent(eventId, request);
