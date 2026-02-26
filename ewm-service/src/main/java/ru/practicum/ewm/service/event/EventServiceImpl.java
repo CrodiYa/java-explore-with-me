@@ -140,11 +140,13 @@ public class EventServiceImpl implements EventService {
                 EventState newState = isAdmin
                         ? EventMapper.mapAdminEventAction(action)
                         : EventMapper.mapUserEventAction(action);
-                event.setState(newState);
-            }
 
-            if (event.getState().equals(EventState.PUBLISHED)) {
-                event.setPublishedOn(Instant.now());
+                if (EventState.PUBLISHED.equals(newState)) {
+                    event.setPublishedOn(Instant.now());
+                }
+                if (newState != null) {
+                    event.setState(newState);
+                }
             }
 
             if (request.getCategory() != null) {
