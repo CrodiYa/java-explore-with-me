@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAnyException(Exception ex,
                                                        HttpServletRequest request) {
-        log.error("Request: [{}]", request, ex);
+        log.error("Request: [{}]", formatRequestInfo(request), ex);
 
         return createResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR,
                 request.getRequestURI(),
@@ -98,6 +98,14 @@ public class GlobalExceptionHandler {
 
     private void logInfo(Throwable ex, HttpServletRequest request) {
         log.info("Resolved: [{}] Request: [{}]", ex.getClass().getName(), request);
-        log.debug("Request: [{}]", request, ex);
+        log.debug("Request: [{}]", formatRequestInfo(request), ex);
+    }
+
+    private String formatRequestInfo(HttpServletRequest request) {
+        return String.format("method=%s, uri=%s, query=%s, remoteAddress=%s",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getQueryString(),
+                request.getRemoteAddr());
     }
 }
