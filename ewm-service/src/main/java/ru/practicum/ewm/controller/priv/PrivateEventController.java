@@ -1,13 +1,67 @@
 package ru.practicum.ewm.controller.priv;
 
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.model.event.EventDtoRequest;
+import ru.practicum.ewm.model.event.EventFullDto;
+import ru.practicum.ewm.model.event.EventShortDto;
+import ru.practicum.ewm.service.event.EventService;
+import ru.practicum.ewm.validation.OnCreate;
+import ru.practicum.ewm.validation.OnUpdate;
+
+import java.util.List;
 
 @Slf4j
 @RestController
 @RequestMapping(path = "/users/{userId}/events")
 @RequiredArgsConstructor
 public class PrivateEventController {
+
+    private final EventService eventService;
+
+    @GetMapping
+    public List<EventShortDto> findEventsByUserId(@PathVariable @Positive Long userId,
+                                                  @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                                  @RequestParam(defaultValue = "10") @Positive Integer size) {
+        return eventService.findEventsByUserId(userId, from, size);
+    }
+
+    @GetMapping("/{eventId}")
+    public EventFullDto findEventById(@PathVariable @Positive Long userId,
+                                      @PathVariable @Positive Long eventId) {
+        return eventService.findEventById(userId, eventId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public EventFullDto addEvent(@PathVariable @Positive Long userId,
+                                 @RequestBody @Validated(OnCreate.class) EventDtoRequest request) {
+        return eventService.addEvent(userId, request);
+    }
+
+    @PatchMapping("/{eventId}")
+    public EventFullDto patchEvent(@PathVariable @Positive Long userId,
+                                   @PathVariable @Positive Long eventId,
+                                   @RequestBody @Validated(OnUpdate.class) EventDtoRequest request) {
+        return eventService.patchEvent(userId, eventId, request);
+    }
+
+    // TODO ACTUAL METHODS WHEN REQUESTS ARE READY
+
+    @GetMapping("/{eventId}/requests")
+    public Object getRequests(@PathVariable @Positive Long userId,
+                              @PathVariable @Positive Long eventId) {
+        return null;
+    }
+
+    @PatchMapping("/{eventId}/requests")
+    public Object patchRequests(@PathVariable @Positive Long userId,
+                                @PathVariable @Positive Long eventId) {
+        return null;
+    }
 }
