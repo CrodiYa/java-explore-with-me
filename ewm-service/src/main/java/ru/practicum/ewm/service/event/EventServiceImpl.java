@@ -70,6 +70,10 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found"));
 
+        if (!event.getInitiator().getId().equals(userId)) {
+            throw new BadRequestException("UserId must match initiatorId");
+        }
+
         return EventMapper.toFullDto(event);
     }
 
