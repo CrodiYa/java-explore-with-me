@@ -53,7 +53,7 @@ public class CategoryServiceImpl implements CategoryService {
             Category category = categoryRepository.save(CategoryMapper.toCategory(request));
             log.info("Successfully saved category with id: {}", category.getId());
             return CategoryMapper.toDto(category);
-        } catch (ConstraintViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during saving category [{}]", request, e);
             throw new ConflictException("Name is not unique");
         }
