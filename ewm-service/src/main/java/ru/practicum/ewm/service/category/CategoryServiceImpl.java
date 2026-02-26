@@ -2,7 +2,6 @@ package ru.practicum.ewm.service.category;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -84,7 +83,7 @@ public class CategoryServiceImpl implements CategoryService {
 
             categoryRepository.deleteById(id);
 
-        } catch (ConstraintViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during deleting category with id [{}]", id, e);
             throw new ConflictException("Some events have this category");
         }
