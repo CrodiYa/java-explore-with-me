@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
     }
 
     private void logInfo(Throwable ex, HttpServletRequest request) {
-        log.info("Resolved: [{}] Request: [{}]", ex.getClass().getName(), request);
+        log.info("Resolved: [{}] Request: [{}]", ex.getClass().getName(), formatRequestInfo(request));
         log.debug("Request: [{}]", formatRequestInfo(request), ex);
     }
 
