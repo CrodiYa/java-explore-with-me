@@ -5,25 +5,30 @@ import ru.practicum.stats.server.model.EndpointHit;
 
 import java.time.LocalDateTime;
 
-import static ru.practicum.dto.Formatter.FORMATTER;
+import static ru.practicum.dto.Formatter.format;
+import static ru.practicum.dto.Formatter.toLocalDateTime;
 
 public class DtoMapper {
 
     public static EndpointHit toEndpoint(EndpointHitDto dto) {
+        LocalDateTime createDate = toLocalDateTime(dto.getTimestamp());
+
         return EndpointHit.builder()
                 .app(dto.getApp())
                 .ip(dto.getIp())
                 .uri(dto.getUri())
-                .createDate(LocalDateTime.parse(dto.getTimestamp(), FORMATTER))
+                .createDate(createDate)
                 .build();
     }
 
     public static EndpointHitDto from(EndpointHit hit) {
+        String timestamp = format(hit.getCreateDate());
+
         return EndpointHitDto.builder()
                 .ip(hit.getIp())
                 .app(hit.getApp())
                 .uri(hit.getUri())
-                .timestamp(hit.getCreateDate().format(FORMATTER))
+                .timestamp(timestamp)
                 .build();
     }
 }
