@@ -2,7 +2,6 @@ package ru.practicum.ewm.service.category;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -35,19 +34,25 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto findById(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
+        Category category = findEntityById(id);
 
         return CategoryMapper.toDto(category);
     }
 
     @Override
+    public Category findEntityById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
+    }
+
+
+    @Override
     public CategoryDto addCategory(CategoryDtoRequest request) {
         try {
             Category category = categoryRepository.save(CategoryMapper.toCategory(request));
-            log.info("Successfully saved [{}]", category);
+            log.info("Successfully saved category with id: {}", category.getId());
             return CategoryMapper.toDto(category);
-        } catch (ConstraintViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during saving category [{}]", request, e);
             throw new ConflictException("Name is not unique");
         }
@@ -59,7 +64,7 @@ public class CategoryServiceImpl implements CategoryService {
             Category category = categoryRepository.findById(id)
                     .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
 
-            log.info("Successfully patched [{}]", category);
+            log.info("Successfully patched category with id: {}", category.getId());
             CategoryMapper.merge(category, request);
 
             return CategoryMapper.toDto(categoryRepository.save(category));
@@ -78,9 +83,16 @@ public class CategoryServiceImpl implements CategoryService {
 
             categoryRepository.deleteById(id);
 
-        } catch (ConstraintViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during deleting category with id [{}]", id, e);
             throw new ConflictException("Some events have this category");
+        }
+    }
+
+    @Override
+    public void throwIfCategoryNotFound(Long categoryId) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new NotFoundException("Category with id " + categoryId + " not found");
         }
     }
 }

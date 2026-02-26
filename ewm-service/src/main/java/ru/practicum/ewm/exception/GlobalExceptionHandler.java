@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAnyException(Exception ex,
                                                        HttpServletRequest request) {
-        log.error("Request: [{}]", request, ex);
+        log.error("Request: [{}]", formatRequestInfo(request), ex);
 
         return createResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR,
                 request.getRequestURI(),
@@ -70,13 +70,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiError> handleConflictException(ConflictException ex,
-                                                                          HttpServletRequest request) {
+    public ResponseEntity<ApiError> handleConflictException(ConflictException ex, HttpServletRequest request) {
         logInfo(ex, request);
-        return createResponseEntity(
-                               HttpStatus.CONFLICT,
-                              request.getRequestURI(),
-                           Collections.singletonMap("error", ex.getMessage()));
+        return createResponseEntity(HttpStatus.CONFLICT,
+                request.getRequestURI(),
+                Collections.singletonMap("error", ex.getMessage()));
     }
 
     private ResponseEntity<ApiError> createResponseEntity(HttpStatus status, String path, Map<String, String> errors) {
@@ -99,7 +97,15 @@ public class GlobalExceptionHandler {
     }
 
     private void logInfo(Throwable ex, HttpServletRequest request) {
-        log.info("Resolved: [{}] Request: [{}]", ex.getClass().getName(), request);
-        log.debug("Request: [{}]", request, ex);
+        log.info("Resolved: [{}] Request: [{}]", ex.getClass().getName(), formatRequestInfo(request));
+        log.debug("Request: [{}]", formatRequestInfo(request), ex);
+    }
+
+    private String formatRequestInfo(HttpServletRequest request) {
+        return String.format("method=%s, uri=%s, query=%s, remoteAddress=%s",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getQueryString(),
+                request.getRemoteAddr());
     }
 }
