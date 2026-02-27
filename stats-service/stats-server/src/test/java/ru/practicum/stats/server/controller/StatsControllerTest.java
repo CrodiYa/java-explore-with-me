@@ -6,10 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.stats.server.exceptions.BadRequestException;
+import ru.practicum.stats.server.handler.ErrorHandler;
 import ru.practicum.stats.server.service.StatsService;
 
 import java.time.LocalDateTime;
@@ -23,7 +26,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static ru.practicum.dto.Formatter.FORMATTER;
 
-@WebMvcTest(StatsController.class)
+@WebMvcTest
+@ContextConfiguration(classes = {StatsController.class, ErrorHandler.class})
+@TestPropertySource(properties = {"logging.level.root=ERROR", "spring.main.banner-mode=off"})
 class StatsControllerTest {
 
     @Autowired
