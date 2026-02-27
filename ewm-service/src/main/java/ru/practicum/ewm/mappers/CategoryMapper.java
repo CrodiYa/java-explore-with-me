@@ -1,9 +1,6 @@
 package ru.practicum.ewm.mappers;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 import ru.practicum.ewm.model.entity.Category;
 import ru.practicum.ewm.model.request.CategoryDtoRequest;
 import ru.practicum.ewm.model.response.CategoryDto;
@@ -13,10 +10,12 @@ public interface CategoryMapper {
 
     CategoryDto toDto(Category category);
 
+    @Mapping(target = "id", ignore = true)
     Category toCategory(CategoryDtoRequest dto);
 
     // @MappingTarget - т к MapStruct находит name у обоих параметров
     // и не может определиться у какого взять конкретно
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     void merge(@MappingTarget Category category, CategoryDtoRequest dto);
 }

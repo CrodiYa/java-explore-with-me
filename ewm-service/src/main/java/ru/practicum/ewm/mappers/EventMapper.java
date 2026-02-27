@@ -19,11 +19,14 @@ public interface EventMapper {
     EventFullDto toFullDto(Event event);
 
     @Mapping(target = "eventDate", expression = "java(Formatter.format(event.getEventDate()))")
+    @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "views", ignore = true)
     EventShortDto toShortDto(Event event);
 
     @Mapping(source = "location.lat", target = "lat")
     @Mapping(source = "location.lon", target = "lon")
     @Mapping(target = "eventDate", expression = "java(Formatter.toInstant(dto.getEventDate()))")
+    // ignore = true - я знаю что это поле не маппится, не ругайся пожалуйста компилятор
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "initiator", ignore = true)
     @Mapping(target = "category", ignore = true)

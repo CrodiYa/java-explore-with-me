@@ -9,6 +9,7 @@ import ru.practicum.stats.server.model.EndpointHit;
 @Mapper(componentModel = "spring", imports = Formatter.class)
 public interface DtoMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "createDate", expression = "java(Formatter.toInstant(dto.getTimestamp()))")
     EndpointHit toEndpoint(EndpointHitDto dto);
 
