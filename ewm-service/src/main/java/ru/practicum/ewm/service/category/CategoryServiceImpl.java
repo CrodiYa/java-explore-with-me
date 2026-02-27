@@ -50,30 +50,28 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto addCategory(CategoryDtoRequest request) {
-        try {
-            Category category = categoryRepository.save(CategoryMapper.toCategory(request));
-            log.info("Successfully saved category with id: {}", category.getId());
-            return CategoryMapper.toDto(category);
-        } catch (DataIntegrityViolationException e) {
-            log.debug("Conflict during saving category [{}]", request, e);
+        if (categoryRepository.existsByName(request.getName())) {
             throw new ConflictException("Name is not unique");
         }
+
+        Category category = categoryRepository.save(CategoryMapper.toCategory(request));
+        log.info("Successfully saved category with id: {}", category.getId());
+        return CategoryMapper.toDto(category);
     }
 
     @Override
     public CategoryDto patchCategory(Long id, CategoryDtoRequest request) {
-        try {
-            Category category = findEntityById(id);
-            CategoryMapper.merge(category, request);
-
-            Category patched = categoryRepository.save(category);
-            log.info("Successfully patched category with id: {}", patched.getId());
-
-            return CategoryMapper.toDto(patched);
-        } catch (DataIntegrityViolationException e) {
-            log.debug("Conflict during patching category [{}]", request, e);
+        if (categoryRepository.existsByName(request.getName())) {
             throw new ConflictException("Name is not unique");
         }
+
+        Category category = findEntityById(id);
+        CategoryMapper.merge(category, request);
+
+        Category patched = categoryRepository.save(category);
+        log.info("Successfully patched category with id: {}", patched.getId());
+
+        return CategoryMapper.toDto(patched);
     }
 
     @Override
