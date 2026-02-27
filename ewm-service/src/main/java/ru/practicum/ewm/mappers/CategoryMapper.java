@@ -1,26 +1,22 @@
 package ru.practicum.ewm.mappers;
 
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 import ru.practicum.ewm.model.entity.Category;
 import ru.practicum.ewm.model.request.CategoryDtoRequest;
 import ru.practicum.ewm.model.response.CategoryDto;
 
-public class CategoryMapper {
-    public static CategoryDto toDto(Category category) {
-        return CategoryDto.builder()
-                .id(category.getId())
-                .name(category.getName())
-                .build();
-    }
+@Mapper(componentModel = "spring")
+public interface CategoryMapper {
 
-    public static Category toCategory(CategoryDtoRequest dto) {
-        return Category.builder().name(dto.getName()).build();
-    }
+    CategoryDto toDto(Category category);
 
-    public static Category merge(Category category, CategoryDtoRequest dto) {
-        if (dto.getName() != null) {
-            category.setName(dto.getName());
-        }
+    Category toCategory(CategoryDtoRequest dto);
 
-        return category;
-    }
+    // @MappingTarget - т к MapStruct находит name у обоих параметров
+    // и не может определиться у какого взять конкретно
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    void merge(@MappingTarget Category category, CategoryDtoRequest dto);
 }

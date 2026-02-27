@@ -33,6 +33,7 @@ public class EventServiceImpl implements EventService {
     private final UserService userService;
     private final CategoryService categoryService;
     private final EventRepository eventRepository;
+    private final EventMapper eventMapper;
 
     @Override
     public List<EventFullDto> findEvents(List<Long> users, List<EventState> states, List<Long> categories,
@@ -50,7 +51,7 @@ public class EventServiceImpl implements EventService {
         EventSpecification spec = new EventSpecification(users, states, categories, start, end);
 
         return eventRepository.findAll(spec, PageRequest.of(from / size, size)).stream()
-                .map(EventMapper::toFullDto)
+                .map(eventMapper::toFullDto)
                 .toList();
     }
 
@@ -59,7 +60,7 @@ public class EventServiceImpl implements EventService {
         userService.throwIfUserNotFound(userId);
 
         return eventRepository.findByInitiatorId(userId, PageRequest.of(from / size, size)).stream()
-                .map(EventMapper::toShortDto)
+                .map(eventMapper::toShortDto)
                 .toList();
     }
 
@@ -74,7 +75,7 @@ public class EventServiceImpl implements EventService {
             throw new BadRequestException("UserId must match initiatorId");
         }
 
-        return EventMapper.toFullDto(event);
+        return eventMapper.toFullDto(event);
     }
 
     @Override
@@ -85,14 +86,14 @@ public class EventServiceImpl implements EventService {
             User user = userService.findEntityById(userId);
             Category category = categoryService.findEntityById(request.getCategory());
 
-            Event event = EventMapper.toEvent(request);
+            Event event = eventMapper.toEvent(request);
             event.setInitiator(user);
             event.setCategory(category);
             event.setState(EventState.PENDING);
 
             Event saved = eventRepository.save(event);
             log.info("Successfully saved event with id: {}", saved.getId());
-            return EventMapper.toFullDto(saved);
+            return eventMapper.toFullDto(saved);
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during saving event [{}]", request, e);
@@ -144,8 +145,8 @@ public class EventServiceImpl implements EventService {
 
             if (action != null) {
                 EventState newState = isAdmin
-                        ? EventMapper.mapAdminEventAction(action)
-                        : EventMapper.mapUserEventAction(action);
+                        ? eventMapper.mapAdminEventAction(action)
+                        : eventMapper.mapUserEventAction(action);
 
                 if (EventState.PUBLISHED.equals(newState)) {
                     event.setPublishedOn(Instant.now());
@@ -160,12 +161,12 @@ public class EventServiceImpl implements EventService {
                 event.setCategory(category);
             }
 
-            EventMapper.merge(event, request);
+            eventMapper.merge(event, request);
 
             Event patched = eventRepository.save(event);
 
             log.info("Successfully patched event with id: {}", patched.getId());
-            return EventMapper.toFullDto(patched);
+            return eventMapper.toFullDto(patched);
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during patching event [{}]", request, e);

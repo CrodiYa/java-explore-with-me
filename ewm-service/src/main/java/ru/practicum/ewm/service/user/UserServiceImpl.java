@@ -25,6 +25,8 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
+    private final UserMapper userMapper;
+
     @Override
     public User findEntityById(Long id) {
         return userRepository.findById(id)
@@ -43,7 +45,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return users.stream()
-                .map(UserMapper::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -54,11 +56,11 @@ public class UserServiceImpl implements UserService {
             throw new ConflictException("Email " + request.getEmail() + " уже используется");
         }
 
-        User user = UserMapper.toEntity(request);
+        User user = userMapper.toEntity(request);
         User savedUser = userRepository.save(user);
         log.info("Создан пользователь: id={}, name={}", savedUser.getId(), savedUser.getName());
 
-        return UserMapper.toDto(savedUser);
+        return userMapper.toDto(savedUser);
     }
 
     @Override

@@ -13,7 +13,8 @@ import ru.practicum.stats.server.mapper.DtoMapper;
 import ru.practicum.stats.server.model.EndpointHit;
 import ru.practicum.stats.server.repository.StatsRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,6 +28,9 @@ public class StatsServiceImplTest {
     @Mock
     private StatsRepository repository;
 
+    @Mock
+    private DtoMapper dtoMapper;
+
     @InjectMocks
     private StatsServiceImpl statsService;
 
@@ -34,8 +38,17 @@ public class StatsServiceImplTest {
     public void shouldSave() {
         EndpointHitDto dtoHit = RandomHelper.getEndpointHitDto();
 
-        EndpointHit savedHit = DtoMapper.toEndpoint(dtoHit);
+        EndpointHit savedHit = EndpointHit.builder()
+                .app(dtoHit.getApp())
+                .uri(dtoHit.getUri())
+                .ip(dtoHit.getIp())
+                .createDate(Instant.now())
+                .build();
+
+        when(dtoMapper.toEndpoint(dtoHit)).thenReturn(savedHit);
+        // когда сервис вызовет репо.save(любой EndpointHit) - верни savedHit
         when(repository.save(any(EndpointHit.class))).thenReturn(savedHit);
+        when(dtoMapper.toEndpointDto(savedHit)).thenReturn(dtoHit);
 
         EndpointHitDto savedDto = statsService.saveHit(dtoHit);
 
@@ -49,8 +62,8 @@ public class StatsServiceImplTest {
 
     @Test
     public void shouldGetStatsNoUriNotUnique() {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        Instant start = Instant.now();
+        Instant end = Instant.now().plus(1, ChronoUnit.DAYS);
 
         List<ViewStatsDto> valid = List.of(
                 RandomHelper.getViewStatsDto(),
@@ -72,8 +85,8 @@ public class StatsServiceImplTest {
 
     @Test
     public void shouldGetStatsNoUriUnique() {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        Instant start = Instant.now();
+        Instant end = Instant.now().plus(1, ChronoUnit.DAYS);
 
         List<ViewStatsDto> valid = List.of(
                 RandomHelper.getViewStatsDto(),
@@ -95,8 +108,8 @@ public class StatsServiceImplTest {
 
     @Test
     public void shouldGetStatsUriNotUnique() {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        Instant start = Instant.now();
+        Instant end = Instant.now().plus(1, ChronoUnit.DAYS);
         List<String> uris = List.of("/uri", "/uri1");
 
         List<ViewStatsDto> valid = List.of(new ViewStatsDto("app", "/uri", 3L),
@@ -117,8 +130,8 @@ public class StatsServiceImplTest {
 
     @Test
     public void shouldGetStatsUriUnique() {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().plusDays(1);
+        Instant start = Instant.now();
+        Instant end = Instant.now().plus(1, ChronoUnit.DAYS);
         List<String> uris = List.of("/uri", "/uri1");
 
         List<ViewStatsDto> valid = List.of(new ViewStatsDto("app", "/uri", 3L),
@@ -139,15 +152,15 @@ public class StatsServiceImplTest {
 
     @Test
     public void shouldThrowWhenStartAfterEnd() {
-        LocalDateTime start = LocalDateTime.now().plusDays(1);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = Instant.now().plus(1, ChronoUnit.DAYS);
+        Instant end = Instant.now();
         assertThrows(BadRequestException.class, () -> statsService.getStats(start, end, null, false));
     }
 
     @Test
     public void shouldThrowWhenStartEqualEnd() {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start;
+        Instant start = Instant.now();
+        Instant end = start;
         assertThrows(BadRequestException.class, () -> statsService.getStats(start, end, null, false));
     }
 

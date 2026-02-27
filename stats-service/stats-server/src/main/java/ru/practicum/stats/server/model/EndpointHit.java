@@ -3,7 +3,7 @@ package ru.practicum.stats.server.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "hit")
@@ -27,5 +27,5 @@ public class EndpointHit {
     private String ip;
 
     @Column(name = "create_date")
-    private LocalDateTime createDate;
+    private Instant createDate;
 }

@@ -9,7 +9,8 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -22,8 +23,8 @@ public class StatsRepositoryTest {
 
     private final StatsRepository repository;
 
-    private final LocalDateTime start = LocalDateTime.of(2000, 1, 1, 0, 0, 0);
-    private final LocalDateTime end = start.plusDays(1);
+    private final Instant start = Instant.parse("2000-01-01T00:00:00Z");
+    private final Instant end = start.plus(1, ChronoUnit.DAYS);
     private final String app = "app";
     private final String ip = "ip";
     private final String uri = "uri";
