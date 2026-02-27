@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,9 +51,10 @@ public class CategoryServiceImplTest {
 
         @Test
         public void shouldThrowConflict() {
-            when(repository.save(any(Category.class))).thenThrow(DataIntegrityViolationException.class);
+            when(repository.existsByName(anyString())).thenReturn(true);
             assertThrows(ConflictException.class, () -> categoryService.addCategory(request));
-            verify(repository).save(any(Category.class));
+            verify(repository).existsByName(anyString());
+            verify(repository, never()).save(any(Category.class));
         }
     }
 
@@ -169,13 +171,12 @@ public class CategoryServiceImplTest {
 
         @Test
         public void shouldThrowConflict() {
-            when(repository.findById(any(Long.class))).thenReturn(Optional.of(new Category(1L, "name")));
-            when(repository.save(any(Category.class))).thenThrow(DataIntegrityViolationException.class);
-
+            when(repository.existsByName("name")).thenReturn(true);
             assertThrows(ConflictException.class,
                     () -> categoryService.patchCategory(1L, new CategoryDtoRequest("name")));
-            verify(repository).findById(any(Long.class));
-            verify(repository).save(any(Category.class));
+            verify(repository).existsByName("name");
+            verify(repository, never()).findById(any(Long.class));
+            verify(repository, never()).save(any(Category.class));
         }
     }
 
