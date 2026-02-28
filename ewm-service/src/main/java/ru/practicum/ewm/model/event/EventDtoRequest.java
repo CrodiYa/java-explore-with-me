@@ -53,14 +53,11 @@ public class EventDtoRequest {
     private Long category;
 
     @PositiveOrZero(groups = {OnCreate.class, OnUpdate.class})
-    @Builder.Default
-    private Integer participantLimit = 0;
+    private Integer participantLimit;
 
-    @Builder.Default
-    private Boolean paid = false;
+    private Boolean paid;
 
-    @Builder.Default
-    private Boolean requestModeration = true;
+    private Boolean requestModeration;
 
     @Null(groups = OnCreate.class)
     private EventStateAction stateAction;

@@ -3,14 +3,13 @@ package ru.practicum.ewm.service.event;
 import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.event.EventDtoRequest;
-import ru.practicum.ewm.model.event.EventFullDto;
-import ru.practicum.ewm.model.event.EventShortDto;
-import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.model.event.*;
 
 import java.util.List;
 
 public interface EventService {
+
+    Event findEntityById(Long id);
 
     /**
      * Retrieves a paginated list of events based on specified filters.

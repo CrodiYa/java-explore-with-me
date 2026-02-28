@@ -3,8 +3,8 @@ package ru.practicum.ewm.model.event;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import ru.practicum.ewm.model.entity.Category;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.user.User;
 
 import java.time.Instant;
 
@@ -56,6 +56,8 @@ public class Event {
     @Column(name = "participant_limit", nullable = false)
     private Integer participantLimit;
 
+    // пре-модерация, true владелец события вручную подтверждает заявки
+    // false - автоматически
     @Column(name = "request_moderation", nullable = false)
     private Boolean requestModeration;
 

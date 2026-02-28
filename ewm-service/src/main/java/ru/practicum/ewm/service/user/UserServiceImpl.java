@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.UserMapper;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.request.NewUserRequest;
 import ru.practicum.ewm.model.response.UserDto;
 import ru.practicum.ewm.repository.UserRepository;

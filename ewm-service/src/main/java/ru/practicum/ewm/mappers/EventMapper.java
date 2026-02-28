@@ -27,39 +27,13 @@ public interface EventMapper {
     @Mapping(source = "location.lon", target = "lon")
     @Mapping(target = "eventDate", expression = "java(Formatter.toInstant(dto.getEventDate()))")
     // ignore = true - я знаю что это поле не маппится, не ругайся пожалуйста компилятор
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "initiator", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "state", ignore = true)
-    @Mapping(target = "publishedOn", ignore = true)
-    @Mapping(target = "createdOn", ignore = true)
+    @IgnoreEventMetadata
     Event toEvent(EventDtoRequest dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(source = "location.lat", target = "lat")
     @Mapping(source = "location.lon", target = "lon")
     @Mapping(target = "eventDate", expression = "java(dto.getEventDate() == null ? event.getEventDate() : Formatter.toInstant(dto.getEventDate()))")
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "initiator", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "state", ignore = true)
-    @Mapping(target = "publishedOn", ignore = true)
-    @Mapping(target = "createdOn", ignore = true)
+    @IgnoreEventMetadata
     void merge(@MappingTarget Event event, EventDtoRequest dto);
-
-    default EventState mapUserEventAction(EventStateAction action) {
-        return switch (action) {
-            case CANCEL_REVIEW -> EventState.CANCELED;
-            case SEND_TO_REVIEW -> EventState.PENDING;
-            case null, default -> null;
-        };
-    }
-
-    default EventState mapAdminEventAction(EventStateAction action) {
-        return switch (action) {
-            case PUBLISH_EVENT -> EventState.PUBLISHED;
-            case REJECT_EVENT -> EventState.CANCELED;
-            case null, default -> null;
-        };
-    }
 }

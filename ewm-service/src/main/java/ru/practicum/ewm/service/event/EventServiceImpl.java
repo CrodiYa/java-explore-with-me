@@ -9,8 +9,9 @@ import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.EventMapper;
-import ru.practicum.ewm.model.entity.Category;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.mappers.EventStateMapper;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.repository.EventRepository;
 import ru.practicum.ewm.repository.EventSpecification;
@@ -34,6 +35,13 @@ public class EventServiceImpl implements EventService {
     private final CategoryService categoryService;
     private final EventRepository eventRepository;
     private final EventMapper eventMapper;
+    private final EventStateMapper eventStateMapper;
+
+    @Override
+    public Event findEntityById(Long id) {
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Event with id " + id + " not found"));
+    }
 
     @Override
     public List<EventFullDto> findEvents(List<Long> users, List<EventState> states, List<Long> categories,
@@ -87,6 +95,11 @@ public class EventServiceImpl implements EventService {
             Category category = categoryService.findEntityById(request.getCategory());
 
             Event event = eventMapper.toEvent(request);
+
+            if (event.getParticipantLimit() == null) event.setParticipantLimit(0);
+            if (event.getPaid() == null) event.setPaid(false);
+            if (event.getRequestModeration() == null) event.setRequestModeration(true);
+
             event.setInitiator(user);
             event.setCategory(category);
             event.setState(EventState.PENDING);
@@ -145,8 +158,8 @@ public class EventServiceImpl implements EventService {
 
             if (action != null) {
                 EventState newState = isAdmin
-                        ? eventMapper.mapAdminEventAction(action)
-                        : eventMapper.mapUserEventAction(action);
+                        ? eventStateMapper.mapAdminEventAction(action)
+                        : eventStateMapper.mapUserEventAction(action);
 
                 if (EventState.PUBLISHED.equals(newState)) {
                     event.setPublishedOn(Instant.now());

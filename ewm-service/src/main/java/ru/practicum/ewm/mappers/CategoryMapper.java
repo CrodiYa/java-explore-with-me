@@ -1,7 +1,7 @@
 package ru.practicum.ewm.mappers;
 
 import org.mapstruct.*;
-import ru.practicum.ewm.model.entity.Category;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.request.CategoryDtoRequest;
 import ru.practicum.ewm.model.response.CategoryDto;
 

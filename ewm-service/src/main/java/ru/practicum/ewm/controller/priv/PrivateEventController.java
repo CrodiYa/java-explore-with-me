@@ -7,10 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.ewm.model.event.EventDtoRequest;
-import ru.practicum.ewm.model.event.EventFullDto;
-import ru.practicum.ewm.model.event.EventShortDto;
+import ru.practicum.ewm.model.event.*;
+import ru.practicum.ewm.model.participation.ParticipationRequestDto;
 import ru.practicum.ewm.service.event.EventService;
+import ru.practicum.ewm.service.participation.ParticipationRequestService;
 import ru.practicum.ewm.validation.OnCreate;
 import ru.practicum.ewm.validation.OnUpdate;
 
@@ -23,6 +23,7 @@ import java.util.List;
 public class PrivateEventController {
 
     private final EventService eventService;
+    private final ParticipationRequestService prService;
 
     @GetMapping
     public List<EventShortDto> findEventsByUserId(@PathVariable @Positive Long userId,
@@ -51,17 +52,16 @@ public class PrivateEventController {
         return eventService.patchEvent(userId, eventId, request);
     }
 
-    // TODO ACTUAL METHODS WHEN REQUESTS ARE READY
-
     @GetMapping("/{eventId}/requests")
-    public Object getRequests(@PathVariable @Positive Long userId,
-                              @PathVariable @Positive Long eventId) {
-        return null;
+    public List<ParticipationRequestDto> getRequests(@PathVariable @Positive Long userId,
+                                               @PathVariable @Positive Long eventId) {
+        return prService.findByEventId(userId, eventId);
     }
 
     @PatchMapping("/{eventId}/requests")
-    public Object patchRequests(@PathVariable @Positive Long userId,
-                                @PathVariable @Positive Long eventId) {
-        return null;
+    public EventRequestStatusUpdateResult patchRequests(@PathVariable @Positive Long userId,
+                                                        @PathVariable @Positive Long eventId,
+                                                        @RequestBody EventRequestStatusUpdateRequest request) {
+        return prService.updateStatusParticipationRequest(userId, eventId, request);
     }
 }
