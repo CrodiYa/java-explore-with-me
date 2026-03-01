@@ -109,14 +109,14 @@ public class EventServiceImpl implements EventService {
         // идём в сервис статистики и получаем { eventId - количество просмотров }
         Map<String, Long> viewsMap = getViewsMap(ids);
 
-        Map<Long, Long> confirmedMap = getConfirmedMap(ids);
+        Map<Long, Integer> confirmedMap = getConfirmedMap(ids);
 
         List<EventShortDto> result = events.stream()
                 .map(event -> {
                     EventShortDto dto = eventMapper.toShortDto(event);
                     // дешевле подставлять строку чем каждый раз делать излишнее склеивание
                     dto.setViews(viewsMap.getOrDefault("/events/" + event.getId(), 0L));
-                    dto.setConfirmedRequests(confirmedMap.getOrDefault(event.getId(), 0L).intValue());
+                    dto.setConfirmedRequests(confirmedMap.getOrDefault(event.getId(), 0));
                     return dto;
                 })
                 .toList();
@@ -311,7 +311,7 @@ public class EventServiceImpl implements EventService {
                 ));
     }
 
-    private Map<Long, Long> getConfirmedMap(List<Long> eventIds) {
+    private Map<Long, Integer> getConfirmedMap(List<Long> eventIds) {
         if (eventIds.isEmpty()) return Collections.emptyMap();
 
         return eventRepository.countConfirmedRequestsByEventIds(eventIds, ParticipationStatus.CONFIRMED)
