@@ -19,6 +19,7 @@ import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -44,7 +45,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         Event event = eventService.findEntityById(eventId);
 
         if (!EventState.PUBLISHED.equals(event.getState())) {
-            throw new ConflictException("Нельзя учавствовать в неопубликованном событии");
+            throw new ConflictException("Нельзя участвовать в неопубликованном событии");
         }
 
         if (repository.existsByRequesterIdAndEventId(userId, eventId)) {
@@ -57,8 +58,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         // если количество подтв ивентов больше или равно лимиту и сам лимит не равен 0 то
         if (event.getParticipantLimit() != 0
-                && repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED)
-                >= event.getParticipantLimit()) {
+            && repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED)
+               >= event.getParticipantLimit()) {
             throw new ConflictException("Достигнут лимит запросов на участие");
         }
 
@@ -68,7 +69,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .status(ParticipationStatus.PENDING)
                 .build();
 
-        if (!event.getRequestModeration()) {
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
             request.setStatus(ParticipationStatus.CONFIRMED);
         }
 
@@ -105,14 +106,13 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
         List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
 
-        log.info("requestModeration={}, participantLimit={}", event.getRequestModeration(),
-                event.getParticipantLimit());
+        log.info("requestModeration={}, participantLimit={}", event.getRequestModeration(), limit);
 
         // если модерация выключена (все идет автоматически) или лимита на запросы нет
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+        if (!event.getRequestModeration() || limit == 0) {
             return EventRequestStatusUpdateResult.builder()
-                    .confirmedRequests(List.of())
-                    .rejectedRequests(List.of())
+                    .confirmedRequests(Collections.emptyList())
+                    .rejectedRequests(Collections.emptyList())
                     .build();
         }
 
@@ -121,16 +121,18 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         // владелец хочет подтвердить, а лимит исчерпан
         // при отклонении не важно, отклонять можно всегда
-        if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed >= limit)
+        if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed >= limit) {
             throw new ConflictException("Достигнут лимит подтвержденных заявок");
+        }
 
         for (ParticipationRequest pr : requests) {
-            if (!pr.getStatus().equals(ParticipationStatus.PENDING))
+            if (!pr.getStatus().equals(ParticipationStatus.PENDING)) {
                 throw new ConflictException("Статус можно изменить только у заявок в состоянии рассмотрения");
+            }
 
             // request.getStatus() -  тело запроса от владельца.
             // Он говорит "хочу эти заявки подтвердить" или "хочу отклонить"
-            if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed < limit) {
+            if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed < limit) {
                 pr.setStatus(ParticipationStatus.CONFIRMED);
                 countConfirmed++;
                 confirmedRequests.add(mapper.toDto(pr));

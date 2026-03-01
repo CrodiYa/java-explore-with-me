@@ -25,7 +25,6 @@ public class StatsController {
         return statsService.saveHit(endpointHitDto);
     }
 
-    // @DateTimeFormat — она не работает с Instant напрямую
     @GetMapping("/stats")
     public List<ViewStatsDto> getStats(@RequestParam Instant start,
                                        @RequestParam Instant end,

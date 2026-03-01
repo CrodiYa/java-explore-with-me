@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.CategoryMapper;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Transactional
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
@@ -25,6 +27,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryMapper categoryMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public List<CategoryDto> findAll(Integer from, Integer size) {
         int page = from / size;
 
@@ -49,40 +52,38 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto addCategory(CategoryDtoRequest request) {
-        try {
-            Category category = categoryRepository.save(categoryMapper.toCategory(request));
-            log.info("Successfully saved category with id: {}", category.getId());
-            return categoryMapper.toDto(category);
-        } catch (DataIntegrityViolationException e) {
-            log.debug("Conflict during saving category [{}]", request, e);
+        if (categoryRepository.existsByName(request.getName())) {
             throw new ConflictException("Name is not unique");
         }
+
+        Category category = categoryRepository.save(categoryMapper.toCategory(request));
+        log.info("Successfully saved category with id: {}", category.getId());
+        return categoryMapper.toDto(category);
     }
 
     @Override
     public CategoryDto patchCategory(Long id, CategoryDtoRequest request) {
-        try {
-            Category category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
-
-            log.info("Successfully patched category with id: {}", category.getId());
-            categoryMapper.merge(category, request);
-
-            return categoryMapper.toDto(categoryRepository.save(category));
-        } catch (DataIntegrityViolationException e) {
-            log.debug("Conflict during patching category [{}]", request, e);
+        if (categoryRepository.existsByNameAndIdNot(request.getName(), id)) {
             throw new ConflictException("Name is not unique");
         }
+
+        Category category = findEntityById(id);
+        categoryMapper.merge(category, request);
+
+        Category patched = categoryRepository.save(category);
+        log.info("Successfully patched category with id: {}", patched.getId());
+
+        return categoryMapper.toDto(patched);
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         try {
-            if (!categoryRepository.existsById(id)) {
-                throw new NotFoundException("Категория с id " + id + " не найдена");
-            }
+            throwIfCategoryNotFound(id);
 
             categoryRepository.deleteById(id);
+            categoryRepository.flush();
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during deleting category with id [{}]", id, e);
