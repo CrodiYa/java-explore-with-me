@@ -30,5 +30,6 @@ public class StatsRequest {
     private List<String> uris;
 
     @JsonSetter(nulls = Nulls.SKIP)
+    @Builder.Default
     private Boolean unique = false;
 }

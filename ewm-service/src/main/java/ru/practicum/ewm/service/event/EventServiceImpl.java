@@ -5,20 +5,33 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import ru.practicum.client.StatsClient;
+import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.Formatter;
+import ru.practicum.dto.StatsRequest;
+import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.EventMapper;
-import ru.practicum.ewm.model.entity.Category;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.mappers.EventStateMapper;
+import ru.practicum.ewm.model.category.Category;
+import ru.practicum.ewm.model.participation.ParticipationStatus;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.repository.EventRepository;
-import ru.practicum.ewm.repository.EventSpecification;
+import ru.practicum.ewm.repository.ParticipationRequestRepository;
+import ru.practicum.ewm.repository.specification.AdminEventSpecification;
+import ru.practicum.ewm.repository.specification.PublicEventSpecification;
 import ru.practicum.ewm.service.category.CategoryService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static ru.practicum.dto.Formatter.toInstant;
 
@@ -29,13 +42,25 @@ public class EventServiceImpl implements EventService {
 
     private static final long HOURS_BEFORE_START_USER = 2;
     private static final long HOURS_BEFORE_START_ADMIN = 1;
+    private static final String APP_NAME = "ewm-main-service";
+    private static final String SORT_BY_VIEWS = "VIEWS";
 
     private final UserService userService;
     private final CategoryService categoryService;
     private final EventRepository eventRepository;
+    private final ParticipationRequestRepository requestRepository;
+    private final EventMapper eventMapper;
+    private final EventStateMapper eventStateMapper;
+    private final StatsClient statsClient;
 
     @Override
-    public List<EventFullDto> findEvents(List<Long> users, List<EventState> states, List<Long> categories,
+    public Event findEntityById(Long id) {
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Event with id " + id + " not found"));
+    }
+
+    @Override
+    public List<EventFullDto> findAdminEvents(List<Long> users, List<EventState> states, List<Long> categories,
                                          String rangeStart, String rangeEnd, Integer from, Integer size) {
 
         Instant start = getRangeInstant(rangeStart);
@@ -47,11 +72,85 @@ public class EventServiceImpl implements EventService {
             }
         }
 
-        EventSpecification spec = new EventSpecification(users, states, categories, start, end);
+        AdminEventSpecification spec = new AdminEventSpecification(users, states, categories, start, end);
 
         return eventRepository.findAll(spec, PageRequest.of(from / size, size)).stream()
-                .map(EventMapper::toFullDto)
+                .map(eventMapper::toFullDto)
                 .toList();
+    }
+
+    @Override
+    public List<EventShortDto> findPublicEvents(String text, List<Long> categories, Boolean paid,
+                                                Instant rangeStart, Instant rangeEnd, boolean onlyAvailable,
+                                                String sort, Integer from, Integer size, String ip) {
+        // записываем в стату что кто то зашел на /events
+        statsClient.hit(EndpointHitDto.builder()
+                        .app(APP_NAME)
+                        .uri("/events")
+                        .ip(ip)
+                        .timestamp(Formatter.format(Instant.now()))
+                        .build());
+
+        if (rangeStart != null && rangeEnd != null) {
+            if (rangeStart.isAfter(rangeEnd)) {
+                throw new BadRequestException("Start can`t be after end");
+            }
+        }
+
+        PublicEventSpecification spec = new PublicEventSpecification(
+                onlyAvailable, rangeStart, rangeEnd, paid, categories, text);
+
+        // достаём события из БД по фильтрам с пагинацией
+        List<Event> events = eventRepository.findAll(spec, PageRequest.of(from / size, size)).getContent();
+
+        // собираем id всех событий чтобы одним запросом получить просмотры
+        List<Long> ids = events.stream().map(Event::getId).toList();
+
+        // идём в сервис статистики и получаем { eventId - количество просмотров }
+        Map<String, Long> viewsMap = getViewsMap(ids);
+
+        Map<Long, Integer> confirmedMap = getConfirmedMap(ids);
+
+        List<EventShortDto> result = events.stream()
+                .map(event -> {
+                    EventShortDto dto = eventMapper.toShortDto(event);
+                    // дешевле подставлять строку чем каждый раз делать излишнее склеивание
+                    dto.setViews(viewsMap.getOrDefault("/events/" + event.getId(), 0L));
+                    dto.setConfirmedRequests(confirmedMap.getOrDefault(event.getId(), 0));
+                    return dto;
+                })
+                .toList();
+
+        if (SORT_BY_VIEWS.equals(sort)) {
+            result = result.stream()
+                    .sorted(Comparator.comparing(EventShortDto::getViews).reversed())
+                    .toList();
+        }
+
+        return result;
+    }
+
+    @Override
+    public EventFullDto findPublicEvent(Long eventId, String ip) {
+        statsClient.hit(EndpointHitDto.builder()
+                .app(APP_NAME)
+                .uri("/events/" + eventId)
+                .ip(ip)
+                .timestamp(Formatter.format(Instant.now()))
+                .build());
+
+        Event event = eventRepository.findEntityById(eventId);
+
+        if (!EventState.PUBLISHED.equals(event.getState())) {
+            throw new NotFoundException("Событие не найдено");
+        }
+
+        EventFullDto dto = eventMapper.toFullDto(event);
+        int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED);
+        // getViewsMap принимает List а не один id — оборачиваем
+        dto.setViews(getViewsMap(List.of(eventId)).getOrDefault("/events/" + eventId, 0L));
+        dto.setConfirmedRequests(confirmedRequests);
+        return dto;
     }
 
     @Override
@@ -59,7 +158,7 @@ public class EventServiceImpl implements EventService {
         userService.throwIfUserNotFound(userId);
 
         return eventRepository.findByInitiatorId(userId, PageRequest.of(from / size, size)).stream()
-                .map(EventMapper::toShortDto)
+                .map(eventMapper::toShortDto)
                 .toList();
     }
 
@@ -74,7 +173,7 @@ public class EventServiceImpl implements EventService {
             throw new BadRequestException("UserId must match initiatorId");
         }
 
-        return EventMapper.toFullDto(event);
+        return eventMapper.toFullDto(event);
     }
 
     @Override
@@ -85,14 +184,19 @@ public class EventServiceImpl implements EventService {
             User user = userService.findEntityById(userId);
             Category category = categoryService.findEntityById(request.getCategory());
 
-            Event event = EventMapper.toEvent(request);
+            Event event = eventMapper.toEvent(request);
+
+            if (event.getParticipantLimit() == null) event.setParticipantLimit(0);
+            if (event.getPaid() == null) event.setPaid(false);
+            if (event.getRequestModeration() == null) event.setRequestModeration(true);
+
             event.setInitiator(user);
             event.setCategory(category);
             event.setState(EventState.PENDING);
 
             Event saved = eventRepository.save(event);
             log.info("Successfully saved event with id: {}", saved.getId());
-            return EventMapper.toFullDto(saved);
+            return eventMapper.toFullDto(saved);
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during saving event [{}]", request, e);
@@ -144,8 +248,8 @@ public class EventServiceImpl implements EventService {
 
             if (action != null) {
                 EventState newState = isAdmin
-                        ? EventMapper.mapAdminEventAction(action)
-                        : EventMapper.mapUserEventAction(action);
+                        ? eventStateMapper.mapAdminEventAction(action)
+                        : eventStateMapper.mapUserEventAction(action);
 
                 if (EventState.PUBLISHED.equals(newState)) {
                     event.setPublishedOn(Instant.now());
@@ -160,12 +264,12 @@ public class EventServiceImpl implements EventService {
                 event.setCategory(category);
             }
 
-            EventMapper.merge(event, request);
+            eventMapper.merge(event, request);
 
             Event patched = eventRepository.save(event);
 
             log.info("Successfully patched event with id: {}", patched.getId());
-            return EventMapper.toFullDto(patched);
+            return eventMapper.toFullDto(patched);
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during patching event [{}]", request, e);
@@ -181,5 +285,40 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
+    // Map<Long, Long> - 1ый это eventId, 2ой кол-во просмотров
+    private Map<String, Long> getViewsMap(List<Long> eventIds) {
+        if (eventIds.isEmpty()) return Collections.emptyMap();
 
+        List<String> uris = eventIds.stream().map(id -> "/events/" + id).toList();
+
+        StatsRequest statsRequest = StatsRequest.builder()
+                .start(Instant.EPOCH.toString())
+                .end(Formatter.format(Instant.now().plusSeconds(1)))
+                .uris(uris)
+                .unique(true)
+                .build();
+
+        List<ViewStatsDto> stats = statsClient.getStats(statsRequest);
+        if (stats == null || stats.isEmpty()) return Collections.emptyMap();
+
+
+        return stats.stream()
+                // stat - номер ивента
+                .collect(Collectors.toMap(
+                        ViewStatsDto::getUri,
+                        ViewStatsDto::getHits, // "значением будет поле hits из dto
+                        Long::sum // если такой ключ уже есть — сложи старое и новое значение
+                ));
+    }
+
+    private Map<Long, Integer> getConfirmedMap(List<Long> eventIds) {
+        if (eventIds.isEmpty()) return Collections.emptyMap();
+
+        return eventRepository.countConfirmedRequestsByEventIds(eventIds, ParticipationStatus.CONFIRMED)
+                .stream()
+                .collect(Collectors.toMap(
+                        EventRequestCount::getEventId,
+                        EventRequestCount::getCount
+                ));
+    }
 }

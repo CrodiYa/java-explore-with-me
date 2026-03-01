@@ -29,6 +29,6 @@ public class EventFullDto {
     private String publishedOn;
     private String createdOn;
 
-    private Integer confirmedRequests; //todo request them from request_event
-    private Long views; //todo request from stats
+    private Integer confirmedRequests;
+    private Long views;
 }

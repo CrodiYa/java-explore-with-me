@@ -9,19 +9,21 @@ import ru.practicum.stats.server.exceptions.BadRequestException;
 import ru.practicum.stats.server.mapper.DtoMapper;
 import ru.practicum.stats.server.repository.StatsRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository repository;
+    // теперь это тоже spring-bean который надо инжектить
+    private final DtoMapper dtoMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
+    public List<ViewStatsDto> getStats(Instant start, Instant end,
                                        List<String> uris, boolean unique) {
-        if (start.isAfter(end) || start.isEqual(end)) {
+        if (start.isAfter(end) || start.equals(end)) {
             throw new BadRequestException("Неправильно заданное время");
         }
 
@@ -39,6 +41,7 @@ public class StatsServiceImpl implements StatsService {
     @Override
     @Transactional
     public EndpointHitDto saveHit(EndpointHitDto dto) {
-        return DtoMapper.from(repository.save(DtoMapper.toEndpoint(dto)));
+        // dtoMapper.toEndpoint(dto) - т к репо принимает entity
+        return dtoMapper.toEndpointDto(repository.save(dtoMapper.toEndpoint(dto)));
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.UserMapper;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.request.NewUserRequest;
 import ru.practicum.ewm.model.response.UserDto;
 import ru.practicum.ewm.repository.UserRepository;
@@ -24,6 +24,8 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+
+    private final UserMapper userMapper;
 
     @Override
     public User findEntityById(Long id) {
@@ -43,7 +45,7 @@ public class UserServiceImpl implements UserService {
         }
 
         return users.stream()
-                .map(UserMapper::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -54,11 +56,11 @@ public class UserServiceImpl implements UserService {
             throw new ConflictException("Email " + request.getEmail() + " уже используется");
         }
 
-        User user = UserMapper.toEntity(request);
+        User user = userMapper.toEntity(request);
         User savedUser = userRepository.save(user);
         log.info("Создан пользователь: id={}, name={}", savedUser.getId(), savedUser.getName());
 
-        return UserMapper.toDto(savedUser);
+        return userMapper.toDto(savedUser);
     }
 
     @Override

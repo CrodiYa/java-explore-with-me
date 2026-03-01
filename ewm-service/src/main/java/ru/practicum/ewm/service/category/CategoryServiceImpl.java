@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.CategoryMapper;
-import ru.practicum.ewm.model.entity.Category;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.request.CategoryDtoRequest;
 import ru.practicum.ewm.model.response.CategoryDto;
 import ru.practicum.ewm.repository.CategoryRepository;
@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -31,7 +32,7 @@ public class CategoryServiceImpl implements CategoryService {
         int page = from / size;
 
         return categoryRepository.findAll(PageRequest.of(page, size)).stream()
-                .map(CategoryMapper::toDto)
+                .map(categoryMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -39,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto findById(Long id) {
         Category category = findEntityById(id);
 
-        return CategoryMapper.toDto(category);
+        return categoryMapper.toDto(category);
     }
 
     @Override
@@ -48,15 +49,16 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new NotFoundException("Категория с id " + id + " не найдена"));
     }
 
+
     @Override
     public CategoryDto addCategory(CategoryDtoRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
             throw new ConflictException("Name is not unique");
         }
 
-        Category category = categoryRepository.save(CategoryMapper.toCategory(request));
+        Category category = categoryRepository.save(categoryMapper.toCategory(request));
         log.info("Successfully saved category with id: {}", category.getId());
-        return CategoryMapper.toDto(category);
+        return categoryMapper.toDto(category);
     }
 
     @Override
@@ -66,12 +68,12 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category category = findEntityById(id);
-        CategoryMapper.merge(category, request);
+        categoryMapper.merge(category, request);
 
         Category patched = categoryRepository.save(category);
         log.info("Successfully patched category with id: {}", patched.getId());
 
-        return CategoryMapper.toDto(patched);
+        return categoryMapper.toDto(patched);
     }
 
     @Override

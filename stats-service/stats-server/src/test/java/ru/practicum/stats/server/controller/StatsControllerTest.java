@@ -10,12 +10,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.Formatter;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.stats.server.exceptions.BadRequestException;
 import ru.practicum.stats.server.handler.ErrorHandler;
 import ru.practicum.stats.server.service.StatsService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -24,7 +26,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static ru.practicum.dto.Formatter.FORMATTER;
 
 @WebMvcTest
 @ContextConfiguration(classes = {StatsController.class, ErrorHandler.class})
@@ -46,7 +47,7 @@ class StatsControllerTest {
                 .app("test-app")
                 .uri("/test")
                 .ip("192.168.0.1")
-                .timestamp(LocalDateTime.now().format(FORMATTER))
+                .timestamp(Formatter.format(Instant.now()))
                 .build();
 
         when(statsService.saveHit(any(EndpointHitDto.class))).thenReturn(hitDto);
@@ -62,8 +63,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithoutUris() throws Exception {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant end = Instant.now();
         List<ViewStatsDto> stats = List.of(
                 ViewStatsDto.builder()
                         .app("test-app")
@@ -72,12 +73,12 @@ class StatsControllerTest {
                         .build()
         );
 
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(Instant.class), any(Instant.class),
                 isNull(), anyBoolean())).thenReturn(stats);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER))
-                        .param("end", end.format(FORMATTER))
+                        .param("start", Formatter.format(start))
+                        .param("end", Formatter.format(end))
                         .param("unique", "false"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].app").value("test-app"))
@@ -87,8 +88,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithUris() throws Exception {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant end = Instant.now();
 
         List<ViewStatsDto> stats = List.of(
                 ViewStatsDto.builder()
@@ -103,12 +104,12 @@ class StatsControllerTest {
                         .build()
         );
 
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(Instant.class), any(Instant.class),
                 anyList(), anyBoolean())).thenReturn(stats);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER))
-                        .param("end", end.format(FORMATTER))
+                        .param("start", Formatter.format(start))
+                        .param("end", Formatter.format(end))
                         .param("uris", "/test1", "/test2")
                         .param("unique", "false"))
                 .andExpect(status().isOk())
@@ -120,8 +121,8 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithUniqueIp() throws Exception {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant end = Instant.now();
         List<ViewStatsDto> stats = List.of(
                 ViewStatsDto.builder()
                         .app("test-app")
@@ -130,12 +131,12 @@ class StatsControllerTest {
                         .build()
         );
 
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(Instant.class), any(Instant.class),
                 isNull(), eq(true))).thenReturn(stats);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER))
-                        .param("end", end.format(FORMATTER))
+                        .param("start", Formatter.format(start))
+                        .param("end", Formatter.format(end))
                         .param("unique", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].hits").value(2));
@@ -143,48 +144,48 @@ class StatsControllerTest {
 
     @Test
     void shouldGetStatsWithDefaultUniqueValue() throws Exception {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
-        LocalDateTime end = LocalDateTime.now();
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
+        Instant end = Instant.now();
         List<ViewStatsDto> stats = List.of();
 
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(Instant.class), any(Instant.class),
                 isNull(), eq(false))).thenReturn(stats);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER))
-                        .param("end", end.format(FORMATTER)))
+                        .param("start", Formatter.format(start))
+                        .param("end", Formatter.format(end)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldReturnBadRequestWhenStartDateAfterEndDate() throws Exception {
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = LocalDateTime.now().minusDays(1);
+        Instant start = Instant.now();
+        Instant end = Instant.now().minus(1, ChronoUnit.DAYS);
 
-        when(statsService.getStats(any(LocalDateTime.class), any(LocalDateTime.class),
+        when(statsService.getStats(any(Instant.class), any(Instant.class),
                 isNull(), eq(false))).thenThrow(BadRequestException.class);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER))
-                        .param("end", end.format(FORMATTER)))
+                        .param("start", Formatter.format(start))
+                        .param("end", Formatter.format(end)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnBadRequestWhenStartDateIsMissing() throws Exception {
-        LocalDateTime end = LocalDateTime.now();
+        Instant end = Instant.now();
 
         mockMvc.perform(get("/stats")
-                        .param("end", end.format(FORMATTER)))
+                        .param("end", Formatter.format(end)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void shouldReturnBadRequestWhenEndDateIsMissing() throws Exception {
-        LocalDateTime start = LocalDateTime.now().minusDays(1);
+        Instant start = Instant.now().minus(1, ChronoUnit.DAYS);
 
         mockMvc.perform(get("/stats")
-                        .param("start", start.format(FORMATTER)))
+                        .param("start", Formatter.format(start)))
                 .andExpect(status().isBadRequest());
     }
 
