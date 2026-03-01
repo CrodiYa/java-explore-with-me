@@ -13,9 +13,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.entity.user.User;
+import ru.practicum.ewm.mappers.UserMapper;
 import ru.practicum.ewm.model.request.NewUserRequest;
 import ru.practicum.ewm.model.response.UserDto;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.util.Collections;
@@ -35,8 +36,12 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
+    @Mock
+    private UserMapper userMapper;
+
     private final NewUserRequest request = new NewUserRequest("name", "valid@email.ru");
     private final User user = new User(1L, "name", "valid@email.ru");
+    private final UserDto userDto = new UserDto(1L, "name", "valid@email.ru");
 
     @Nested
     class SavingUser {
@@ -44,11 +49,16 @@ public class UserServiceImplTest {
         public void shouldSave() {
             when(repository.existsByEmail(any(String.class))).thenReturn(false);
             when(repository.save(any(User.class))).thenReturn(user);
+            when(userMapper.toEntity(any(NewUserRequest.class))).thenReturn(user);
+            when(userMapper.toDto(user)).thenReturn(userDto);
             UserDto saved = userService.createUser(request);
             assertEquals(request.getName(), saved.getName());
             assertEquals(request.getEmail(), saved.getEmail());
             verify(repository).existsByEmail(any(String.class));
             verify(repository).save(any(User.class));
+            verify(userMapper).toDto(any(User.class));
+            verify(userMapper).toEntity(any(NewUserRequest.class));
+
         }
 
         @Test
@@ -102,11 +112,15 @@ public class UserServiceImplTest {
 
             when(repository.findAll(pageable)).thenReturn(page);
 
+            when(userMapper.toDto(users.get(0))).thenReturn(expected.get(0));
+            when(userMapper.toDto(users.get(1))).thenReturn(expected.get(1));
+
             List<UserDto> actual = userService.getUsers(null, from, size);
 
             assertEquals(expected, actual);
             verify(repository).findAll(pageable);
             verify(repository, never()).findByIdIn(anyList(), any(PageRequest.class));
+            verify(userMapper, times(2)).toDto(any(User.class));
         }
 
         @Test
@@ -129,12 +143,15 @@ public class UserServiceImplTest {
             Pageable pageable = PageRequest.of(pageIndex, size);
 
             when(repository.findAll(pageable)).thenReturn(page);
+            when(userMapper.toDto(users.get(0))).thenReturn(expected.get(0));
+            when(userMapper.toDto(users.get(1))).thenReturn(expected.get(1));
 
             List<UserDto> actual = userService.getUsers(Collections.emptyList(), from, size);
 
             assertEquals(expected, actual);
             verify(repository).findAll(pageable);
             verify(repository, never()).findByIdIn(anyList(), any(PageRequest.class));
+            verify(userMapper, times(2)).toDto(any(User.class));
         }
 
 
@@ -159,6 +176,8 @@ public class UserServiceImplTest {
             Pageable pageable = PageRequest.of(pageIndex, size);
 
             when(repository.findByIdIn(ids, pageable)).thenReturn(users);
+            when(userMapper.toDto(users.get(0))).thenReturn(expected.get(0));
+            when(userMapper.toDto(users.get(1))).thenReturn(expected.get(1));
 
             List<UserDto> actual = userService.getUsers(ids, from, size);
 

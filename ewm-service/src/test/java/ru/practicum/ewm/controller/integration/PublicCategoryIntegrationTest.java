@@ -9,7 +9,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.RandomHelper;
-import ru.practicum.ewm.model.entity.Category;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.repository.CategoryRepository;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;

@@ -14,7 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.TestPropertySource;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.entity.Category;
+import ru.practicum.ewm.mappers.CategoryMapper;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.request.CategoryDtoRequest;
 import ru.practicum.ewm.model.response.CategoryDto;
 import ru.practicum.ewm.repository.CategoryRepository;
@@ -33,20 +34,28 @@ public class CategoryServiceImplTest {
     @Mock
     private CategoryRepository repository;
 
+    @Mock
+    private CategoryMapper categoryMapper;
+
     @InjectMocks
     private CategoryServiceImpl categoryService;
 
     private final CategoryDtoRequest request = new CategoryDtoRequest("name");
     private final Category category = new Category(1L, "name");
+    private final CategoryDto categoryDto = new CategoryDto(1L, "name");
 
     @Nested
     class SavingCategory {
         @Test
         public void shouldSave() {
+            when(categoryMapper.toCategory(request)).thenReturn(category);
+            when(categoryMapper.toDto(category)).thenReturn(categoryDto);
             when(repository.save(any(Category.class))).thenReturn(category);
             CategoryDto saved = categoryService.addCategory(request);
             assertEquals(request.getName(), saved.getName());
             verify(repository).save(any(Category.class));
+            verify(categoryMapper).toCategory(any(CategoryDtoRequest.class));
+            verify(categoryMapper).toDto(any(Category.class));
         }
 
         @Test
@@ -62,12 +71,14 @@ public class CategoryServiceImplTest {
     class FindingCategoryById {
         @Test
         public void shouldFind() {
+            when(categoryMapper.toDto(category)).thenReturn(categoryDto);
             when(repository.findById(any(Long.class))).thenReturn(Optional.of(category));
             CategoryDto found = categoryService.findById(1L);
             assertEquals(1L, found.getId());
             assertEquals("name", found.getName());
 
             verify(repository).findById(any(Long.class));
+            verify(categoryMapper).toDto(any(Category.class));
         }
 
         @Test
@@ -113,12 +124,16 @@ public class CategoryServiceImplTest {
             Page<Category> categoryPage = new PageImpl<>(categories);
             Pageable pageable = PageRequest.of(page, size);
 
+            when(categoryMapper.toDto(categories.getFirst())).thenReturn(expected.getFirst());
+            when(categoryMapper.toDto(categories.get(1))).thenReturn(expected.get(1));
+
             when(repository.findAll(pageable)).thenReturn(categoryPage);
 
             List<CategoryDto> actual = categoryService.findAll(from, size);
 
             assertEquals(expected, actual);
             verify(repository).findAll(pageable);
+            verify(categoryMapper, times(2)).toDto(any(Category.class));
         }
     }
 
@@ -153,11 +168,13 @@ public class CategoryServiceImplTest {
 
         @Test
         public void shouldPath() {
+            when(categoryMapper.toDto(category)).thenReturn(categoryDto);
             when(repository.findById(any(Long.class))).thenReturn(Optional.of(category));
             when(repository.save(any(Category.class))).thenReturn(category);
             assertDoesNotThrow(() -> categoryService.patchCategory(1L, new CategoryDtoRequest("name")));
             verify(repository).findById(any(Long.class));
             verify(repository).save(any(Category.class));
+            verify(categoryMapper).toDto(any(Category.class));
         }
 
         @Test
