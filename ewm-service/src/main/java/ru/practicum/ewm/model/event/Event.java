@@ -51,6 +51,7 @@ public class Event {
     private Boolean paid;
 
     @Column(name = "state", nullable = false)
+    @Enumerated(EnumType.STRING)
     private EventState state;
 
     @Column(name = "participant_limit", nullable = false)
