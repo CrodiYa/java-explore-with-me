@@ -16,6 +16,8 @@ public interface EventMapper {
     @Mapping(target = "eventDate", expression = "java(Formatter.format(event.getEventDate()))")
     @Mapping(target = "createdOn", expression = "java(Formatter.format(event.getCreatedOn()))")
     @Mapping(target = "publishedOn", expression = "java(event.getPublishedOn() == null ? null : Formatter.format(event.getPublishedOn()))")
+    @Mapping(target = "confirmedRequests", ignore = true)
+    @Mapping(target = "views", ignore = true)
     EventFullDto toFullDto(Event event);
 
     @Mapping(target = "eventDate", expression = "java(Formatter.format(event.getEventDate()))")
