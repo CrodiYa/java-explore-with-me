@@ -1,5 +1,5 @@
 package ru.practicum.ewm.model.participation;
 
-public enum ParticipationState {
+public enum ParticipationStatus {
     PENDING, CONFIRMED, REJECTED, CANCELED
 }

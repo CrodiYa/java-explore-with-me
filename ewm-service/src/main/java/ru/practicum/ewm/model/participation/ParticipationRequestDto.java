@@ -18,5 +18,5 @@ public class ParticipationRequestDto {
 
     private String created;
 
-    private ParticipationState status;
+    private ParticipationStatus status;
 }

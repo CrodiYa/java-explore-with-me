@@ -16,7 +16,7 @@ import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.EventMapper;
 import ru.practicum.ewm.mappers.EventStateMapper;
 import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.participation.ParticipationState;
+import ru.practicum.ewm.model.participation.ParticipationStatus;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.repository.EventRepository;
@@ -101,16 +101,6 @@ public class EventServiceImpl implements EventService {
         // достаём события из БД по фильтрам с пагинацией
         List<Event> events = eventRepository.findAll(spec, PageRequest.of(from / size, size)).getContent();
 
-        // событие доступно если лимита нет вообще, приходи кто хочешь ИЛИ
-        // количество подтверждённых заявок меньше лимита - места ещё есть
-        if (onlyAvailable) {
-            events = events.stream()
-                    .filter(e -> e.getParticipantLimit() == 0 ||
-                            requestRepository.countByEventIdAndStatus(e.getId(), ParticipationState.CONFIRMED)
-                                    < e.getParticipantLimit())
-                    .toList();
-        }
-
         // собираем id всех событий чтобы одним запросом получить просмотры
         List<Long> ids = events.stream().map(Event::getId).toList();
 
@@ -122,7 +112,7 @@ public class EventServiceImpl implements EventService {
                     EventShortDto dto = eventMapper.toShortDto(event);
                     dto.setViews(viewsMap.getOrDefault(event.getId(), 0L));
                     dto.setConfirmedRequests(requestRepository.countByEventIdAndStatus(event.getId(),
-                            ParticipationState.CONFIRMED));
+                            ParticipationStatus.CONFIRMED));
                     return dto;
                 })
                 .toList();
@@ -154,7 +144,7 @@ public class EventServiceImpl implements EventService {
         }
 
         EventFullDto dto = eventMapper.toFullDto(event);
-        int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationState.CONFIRMED);
+        int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED);
         // getViewsMap принимает List а не один id — оборачиваем
         dto.setViews(getViewsMap(List.of(eventId)).getOrDefault(eventId, 0L));
         dto.setConfirmedRequests(confirmedRequests);

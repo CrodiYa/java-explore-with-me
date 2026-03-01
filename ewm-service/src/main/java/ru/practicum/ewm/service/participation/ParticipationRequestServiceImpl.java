@@ -12,7 +12,7 @@ import ru.practicum.ewm.model.event.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.participation.ParticipationRequest;
 import ru.practicum.ewm.model.participation.ParticipationRequestDto;
-import ru.practicum.ewm.model.participation.ParticipationState;
+import ru.practicum.ewm.model.participation.ParticipationStatus;
 import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.ParticipationRequestRepository;
 import ru.practicum.ewm.service.event.EventService;
@@ -43,12 +43,12 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         User requester = userService.findEntityById(userId);
         Event event = eventService.findEntityById(eventId);
 
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (!EventState.PUBLISHED.equals(event.getState())) {
             throw new ConflictException("Нельзя учавствовать в неопубликованном событии");
         }
 
         if (repository.existsByRequesterIdAndEventId(userId, eventId)) {
-            throw new ConflictException("Такой владелец уже есть");
+            throw new ConflictException("Запрос уже существует");
         }
 
         if (event.getInitiator().getId().equals(userId)) {
@@ -56,19 +56,21 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         }
 
         // если количество подтв ивентов больше или равно лимиту и сам лимит не равен 0 то
-        if (repository.countByEventIdAndStatus(eventId, ParticipationState.CONFIRMED) >= event.getParticipantLimit()
-                && event.getParticipantLimit() != 0) {
+        if (event.getParticipantLimit() != 0
+                && repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED)
+                >= event.getParticipantLimit()) {
             throw new ConflictException("Достигнут лимит запросов на участие");
         }
 
         ParticipationRequest request = ParticipationRequest.builder()
                 .requester(requester)
                 .event(event)
-                .status(ParticipationState.PENDING)
+                .status(ParticipationStatus.PENDING)
                 .build();
 
-        if (!event.getRequestModeration())
-            request.setStatus(ParticipationState.CONFIRMED);
+        if (!event.getRequestModeration()) {
+            request.setStatus(ParticipationStatus.CONFIRMED);
+        }
 
         return mapper.toDto(repository.save(request));
     }
@@ -80,13 +82,13 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         if (!request.getRequester().getId().equals(userId)) {
             throw new ConflictException("Нельзя отменить чужую заявку");
         }
-        request.setStatus(ParticipationState.CANCELED);
+        request.setStatus(ParticipationStatus.CANCELED);
         return mapper.toDto(repository.save(request));
     }
 
     @Override
     public List<ParticipationRequestDto> findByEventId(Long userId, Long eventId) {
-        getEventByOwner(userId, eventId);
+        getEventAndVerifyOwner(userId, eventId);
         return repository.findByEventId(eventId)
                 .stream()
                 .map(mapper::toDto)
@@ -96,11 +98,10 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Override
     public EventRequestStatusUpdateResult updateStatusParticipationRequest(Long userId, Long eventId,
                                                                            EventRequestStatusUpdateRequest request) {
-        Event event = getEventByOwner(userId, eventId);
+        Event event = getEventAndVerifyOwner(userId, eventId);
         // проверяем лимиты после раннего выхода
         int limit = event.getParticipantLimit();
-        int countConfirmed = repository.countByEventIdAndStatus(eventId, ParticipationState.CONFIRMED);
-        List<ParticipationRequest> requests = repository.findAllByIdIn(request.getRequestIds());
+
         List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
         List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
 
@@ -115,23 +116,26 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                     .build();
         }
 
+        int countConfirmed = repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED);
+        List<ParticipationRequest> requests = repository.findAllByIdIn(request.getRequestIds());
+
         // владелец хочет подтвердить, а лимит исчерпан
         // при отклонении не важно, отклонять можно всегда
-        if (request.getStatus() == ParticipationState.CONFIRMED && countConfirmed >= limit)
+        if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed >= limit)
             throw new ConflictException("Достигнут лимит подтвержденных заявок");
 
         for (ParticipationRequest pr : requests) {
-            if (!pr.getStatus().equals(ParticipationState.PENDING))
+            if (!pr.getStatus().equals(ParticipationStatus.PENDING))
                 throw new ConflictException("Статус можно изменить только у заявок в состоянии рассмотрения");
 
             // request.getStatus() -  тело запроса от владельца.
             // Он говорит "хочу эти заявки подтвердить" или "хочу отклонить"
-            if (request.getStatus() == ParticipationState.CONFIRMED && countConfirmed < limit) {
-                pr.setStatus(ParticipationState.CONFIRMED);
+            if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed < limit) {
+                pr.setStatus(ParticipationStatus.CONFIRMED);
                 countConfirmed++;
                 confirmedRequests.add(mapper.toDto(pr));
             } else {
-                pr.setStatus(ParticipationState.REJECTED);
+                pr.setStatus(ParticipationStatus.REJECTED);
                 rejectedRequests.add(mapper.toDto(pr));
             }
         }
@@ -141,12 +145,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         // если лимит исчерпался во время цикла, дошел до края цикла (пограничный случай)
         // Если при подтверждении данной заявки, лимит заявок для события исчерпан
         // то все неподтверждённые заявки необходимо отклонить
-        if (request.getStatus().equals(ParticipationState.CONFIRMED) && countConfirmed >= limit) {
-            // ожидающие подтверждения
-            List<ParticipationRequest> pendingRequests =
-                    repository.findByEventIdAndStatus(eventId, ParticipationState.PENDING);
-            pendingRequests.forEach(pr -> pr.setStatus(ParticipationState.REJECTED));
-            repository.saveAll(pendingRequests);
+        if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed >= limit) {
+            repository.rejectPendingRequests(eventId, ParticipationStatus.PENDING);
         }
 
         return EventRequestStatusUpdateResult.builder()
@@ -155,7 +155,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .build();
     }
 
-    private Event getEventByOwner(Long userId, Long eventId) {
+    private Event getEventAndVerifyOwner(Long userId, Long eventId) {
         Event event = eventService.findEntityById(eventId);
         if (!event.getInitiator().getId().equals(userId)) {
             throw new NotFoundException("Событие не найдено");
