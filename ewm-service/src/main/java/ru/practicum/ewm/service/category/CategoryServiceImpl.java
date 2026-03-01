@@ -63,7 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryDto patchCategory(Long id, CategoryDtoRequest request) {
-        if (categoryRepository.existsByName(request.getName())) {
+        if (categoryRepository.existsByNameAndIdNot(request.getName(), id)) {
             throw new ConflictException("Name is not unique");
         }
 
@@ -77,11 +77,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         try {
             throwIfCategoryNotFound(id);
 
             categoryRepository.deleteById(id);
+            categoryRepository.flush();
 
         } catch (DataIntegrityViolationException e) {
             log.debug("Conflict during deleting category with id [{}]", id, e);

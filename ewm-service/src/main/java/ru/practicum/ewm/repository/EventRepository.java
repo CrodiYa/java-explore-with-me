@@ -15,14 +15,4 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     Event findEntityById(Long eventId);
 
     Collection<Event> findByInitiatorId(Long userId, PageRequest pageRequest);
-
-    @Query("""
-            SELECT r.event.id as eventId,
-            COUNT(r) as count
-            FROM ParticipationRequest r
-            WHERE r.event.id IN :eventIds
-            AND r.status = :status
-            GROUP BY r.event.id
-            """)
-    List<EventRequestCount> countConfirmedRequestsByEventIds(List<Long> eventIds, ParticipationStatus status);
 }
