@@ -16,7 +16,7 @@ public class PublicEventSpecification extends BaseEventSpecification {
     private final boolean onlyAvailable;
 
     public PublicEventSpecification(boolean onlyAvailable,
-             Instant rangeStart, Instant rangeEnd, Boolean paid, List<Long> categories, String text) {
+                                    Instant rangeStart, Instant rangeEnd, Boolean paid, List<Long> categories, String text) {
         super(categories, rangeStart, rangeEnd);
         this.onlyAvailable = onlyAvailable;
         this.paid = paid;
