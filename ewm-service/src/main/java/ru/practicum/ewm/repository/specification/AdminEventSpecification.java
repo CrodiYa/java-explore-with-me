@@ -1,4 +1,4 @@
-package ru.practicum.ewm.repository;
+package ru.practicum.ewm.repository.specification;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -12,7 +12,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EventSpecification implements Specification<Event> {
+import static ru.practicum.ewm.repository.specification.PublicEventSpecification.getPredicate;
+
+public class AdminEventSpecification implements Specification<Event> {
 
     private final List<Long> users;
     private final List<EventState> states;
@@ -20,8 +22,8 @@ public class EventSpecification implements Specification<Event> {
     private final Instant rangeStart;
     private final Instant rangeEnd;
 
-    public EventSpecification(List<Long> users, List<EventState> states, List<Long> categories,
-                              Instant rangeStart, Instant rangeEnd) {
+    public AdminEventSpecification(List<Long> users, List<EventState> states, List<Long> categories,
+                                   Instant rangeStart, Instant rangeEnd) {
         super();
         this.users = users;
         this.states = states;
@@ -42,22 +44,6 @@ public class EventSpecification implements Specification<Event> {
             predicates.add(root.get("state").in(states));
         }
 
-        if (categories != null && !categories.isEmpty()) {
-            predicates.add(root.get("category").get("id").in(categories));
-        }
-
-        if (rangeStart != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("eventDate"), rangeStart));
-        }
-
-        if (rangeEnd != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("eventDate"), rangeEnd));
-        }
-
-        if (predicates.isEmpty()) {
-            return cb.conjunction();
-        }
-
-        return cb.and(predicates.toArray(new Predicate[0]));
+        return getPredicate(root, cb, predicates, rangeStart, rangeEnd, categories);
     }
 }

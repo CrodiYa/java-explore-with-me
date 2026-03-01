@@ -26,7 +26,7 @@ public class AdminEventController {
     private final EventService eventService;
 
     @GetMapping
-    public List<EventFullDto> findEvents(@RequestParam(required = false) List<Long> users,
+    public List<EventFullDto> findAdminEvents(@RequestParam(required = false) List<Long> users,
                                          @RequestParam(required = false) List<EventState> states,
                                          @RequestParam(required = false) List<Long> categories,
                                          @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN) String rangeStart,
@@ -34,7 +34,7 @@ public class AdminEventController {
                                          @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
                                          @RequestParam(defaultValue = "10") @Positive Integer size) {
 
-        return eventService.findEvents(users, states, categories, rangeStart, rangeEnd, from, size);
+        return eventService.findAdminEvents(users, states, categories, rangeStart, rangeEnd, from, size);
     }
 
     @PatchMapping("/{eventId}")

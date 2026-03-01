@@ -20,6 +20,6 @@ public class EventShortDto {
     private CategoryDto category;
     private UserDto initiator;
     private Boolean paid;
-    private Integer confirmedRequests; //todo request them from request_event
-    private Long views; //todo request from stats
+    private Integer confirmedRequests;
+    private Long views;
 }
