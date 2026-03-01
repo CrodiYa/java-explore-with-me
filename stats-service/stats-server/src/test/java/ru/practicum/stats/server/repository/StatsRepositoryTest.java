@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.TestPropertySource;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.stats.server.model.EndpointHit;
 
@@ -19,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DataJpaTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@TestPropertySource(properties = {
+        "logging.level.root=ERROR",
+        "spring.main.banner-mode=off",
+        "spring.jpa.properties.hibernate.format_sql=false"
+})
 public class StatsRepositoryTest {
 
     private final StatsRepository repository;

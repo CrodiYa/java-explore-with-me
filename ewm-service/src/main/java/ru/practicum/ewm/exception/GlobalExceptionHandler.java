@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
@@ -38,7 +39,9 @@ public class GlobalExceptionHandler {
         return createBadRequest(request.getRequestURI(), errors);
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HandlerMethodValidationException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class,
+            HandlerMethodValidationException.class,
+            MissingServletRequestParameterException.class})
     public ResponseEntity<ApiError> handleMismatchViolation(Exception ex, HttpServletRequest request) {
 
         logInfo(ex, request);
