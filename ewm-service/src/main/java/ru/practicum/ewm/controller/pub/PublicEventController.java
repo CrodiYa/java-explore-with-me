@@ -22,10 +22,8 @@ public class PublicEventController {
     public List<EventShortDto> findPublicEvents(@RequestParam(required = false) String text,
                                                 @RequestParam(required = false) List<Long> categories,
                                                 @RequestParam(required = false) Boolean paid,
-                                                @RequestParam(required = false)
-                                                Instant rangeStart,
-                                                @RequestParam(required = false)
-                                                Instant rangeEnd,
+                                                @RequestParam(required = false) Instant rangeStart,
+                                                @RequestParam(required = false) Instant rangeEnd,
                                                 @RequestParam(defaultValue = "false") boolean onlyAvailable,
                                                 @RequestParam(required = false) String sort,
                                                 @RequestParam(defaultValue = "0") Integer from,

@@ -1,5 +1,6 @@
 package ru.practicum.ewm.controller.pub;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,7 @@ public class PublicCompilationController {
     }
 
     @GetMapping("/{compId}")
-    public CompilationDto findCompilationById(@PathVariable Long compId) {
+    public CompilationDto findCompilationById(@PathVariable @Positive Long compId) {
         log.info("GET /compilations/{}", compId);
         return compilationService.findCompilationById(compId);
     }

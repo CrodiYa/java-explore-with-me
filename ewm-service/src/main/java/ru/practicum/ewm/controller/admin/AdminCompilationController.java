@@ -1,6 +1,7 @@
 package ru.practicum.ewm.controller.admin;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class AdminCompilationController {
     }
 
     @PatchMapping("/{compId}")
-    public CompilationDto updateCompilation(@PathVariable Long compId,
+    public CompilationDto updateCompilation(@PathVariable @Positive Long compId,
                                             @Valid @RequestBody UpdateCompilationRequest dto) {
         log.info("PATCH /admin/compilations/{}", compId);
         return compilationService.updateCompilation(compId, dto);
@@ -34,7 +35,7 @@ public class AdminCompilationController {
 
     @DeleteMapping("/{compId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteCompilation(@PathVariable Long compId) {
+    public void deleteCompilation(@PathVariable @Positive Long compId) {
         log.info("DELETE /admin/compilations/{}", compId);
         compilationService.deleteCompilation(compId);
     }
