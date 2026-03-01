@@ -27,6 +27,7 @@ import ru.practicum.ewm.service.category.CategoryService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ public class EventServiceImpl implements EventService {
     private static final long HOURS_BEFORE_START_USER = 2;
     private static final long HOURS_BEFORE_START_ADMIN = 1;
     private static final String APP_NAME = "ewm-main-service";
+    private static final String SORT_BY_VIEWS = "VIEWS";
 
     private final UserService userService;
     private final CategoryService categoryService;
@@ -105,20 +107,21 @@ public class EventServiceImpl implements EventService {
         List<Long> ids = events.stream().map(Event::getId).toList();
 
         // идём в сервис статистики и получаем { eventId - количество просмотров }
-        Map<Long, Long> viewsMap = getViewsMap(ids);
+        Map<String, Long> viewsMap = getViewsMap(ids);
+
+        Map<Long, Long> confirmedMap = getConfirmedMap(ids);
 
         List<EventShortDto> result = events.stream()
                 .map(event -> {
                     EventShortDto dto = eventMapper.toShortDto(event);
-                    dto.setViews(viewsMap.getOrDefault(event.getId(), 0L));
-                    dto.setConfirmedRequests(requestRepository.countByEventIdAndStatus(event.getId(),
-                            ParticipationStatus.CONFIRMED));
+                    // дешевле подставлять строку чем каждый раз делать излишнее склеивание
+                    dto.setViews(viewsMap.getOrDefault("/events/" + event.getId(), 0L));
+                    dto.setConfirmedRequests(confirmedMap.getOrDefault(event.getId(), 0L).intValue());
                     return dto;
                 })
                 .toList();
 
-        // сортировка: по VIEWS в коде, по EVENT_DATE через БД (уже по умолчанию)
-        if ("VIEWS".equals(sort)) {
+        if (SORT_BY_VIEWS.equals(sort)) {
             result = result.stream()
                     .sorted(Comparator.comparing(EventShortDto::getViews).reversed())
                     .toList();
@@ -136,17 +139,16 @@ public class EventServiceImpl implements EventService {
                 .timestamp(Formatter.format(Instant.now()))
                 .build());
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Событие не найдено"));
+        Event event = eventRepository.findEntityById(eventId);
 
-        if (!event.getState().equals(EventState.PUBLISHED)) {
+        if (!EventState.PUBLISHED.equals(event.getState())) {
             throw new NotFoundException("Событие не найдено");
         }
 
         EventFullDto dto = eventMapper.toFullDto(event);
         int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED);
         // getViewsMap принимает List а не один id — оборачиваем
-        dto.setViews(getViewsMap(List.of(eventId)).getOrDefault(eventId, 0L));
+        dto.setViews(getViewsMap(List.of(eventId)).getOrDefault("/events/" + eventId, 0L));
         dto.setConfirmedRequests(confirmedRequests);
         return dto;
     }
@@ -284,27 +286,39 @@ public class EventServiceImpl implements EventService {
     }
 
     // Map<Long, Long> - 1ый это eventId, 2ой кол-во просмотров
-    private Map<Long, Long> getViewsMap(List<Long> eventIds) {
-        if (eventIds.isEmpty()) return Map.of();
+    private Map<String, Long> getViewsMap(List<Long> eventIds) {
+        if (eventIds.isEmpty()) return Collections.emptyMap();
 
         List<String> uris = eventIds.stream().map(id -> "/events/" + id).toList();
 
         StatsRequest statsRequest = StatsRequest.builder()
-                .start("1970-01-01 00:00:00")
+                .start(Instant.EPOCH.toString())
                 .end(Formatter.format(Instant.now().plusSeconds(1)))
                 .uris(uris)
                 .unique(true)
                 .build();
 
         List<ViewStatsDto> stats = statsClient.getStats(statsRequest);
-        if (stats == null || stats.isEmpty()) return Map.of();
+        if (stats == null || stats.isEmpty()) return Collections.emptyMap();
+
 
         return stats.stream()
                 // stat - номер ивента
                 .collect(Collectors.toMap(
-                        stat -> Long.parseLong(stat.getUri().replace("/events/", "")),
+                        ViewStatsDto::getUri,
                         ViewStatsDto::getHits, // "значением будет поле hits из dto
                         Long::sum // если такой ключ уже есть — сложи старое и новое значение
+                ));
+    }
+
+    private Map<Long, Long> getConfirmedMap(List<Long> eventIds) {
+        if (eventIds.isEmpty()) return Collections.emptyMap();
+
+        return eventRepository.countConfirmedRequestsByEventIds(eventIds, ParticipationStatus.CONFIRMED)
+                .stream()
+                .collect(Collectors.toMap(
+                        EventRequestCount::getEventId,
+                        EventRequestCount::getCount
                 ));
     }
 }
