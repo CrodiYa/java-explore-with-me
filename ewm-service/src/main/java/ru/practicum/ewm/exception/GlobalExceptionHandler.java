@@ -21,16 +21,6 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleAnyException(Exception ex,
-                                                       HttpServletRequest request) {
-        log.error("Request: [{}]", formatRequestInfo(request), ex);
-
-        return createResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR,
-                request.getRequestURI(),
-                Collections.singletonMap("error", "Error"));
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidationExceptions(MethodArgumentNotValidException ex,
                                                                HttpServletRequest request) {
@@ -84,6 +74,16 @@ public class GlobalExceptionHandler {
         logInfo(ex, request);
         return createBadRequest(request.getRequestURI(),
                 Collections.singletonMap("error", "Invalid date format. Expected: yyyy-MM-dd HH:mm:ss"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleAnyException(Exception ex,
+                                                       HttpServletRequest request) {
+        log.error("Request: [{}]", formatRequestInfo(request), ex);
+
+        return createResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR,
+                request.getRequestURI(),
+                Collections.singletonMap("error", "Error"));
     }
 
     private ResponseEntity<ApiError> createResponseEntity(HttpStatus status, String path, Map<String, String> errors) {

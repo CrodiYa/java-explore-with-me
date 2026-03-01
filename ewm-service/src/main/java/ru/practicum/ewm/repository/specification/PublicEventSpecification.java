@@ -50,22 +50,18 @@ public class PublicEventSpecification extends BaseEventSpecification {
             // "requests" — название поля связи в твоей Entity (Event)
             Join<Event, ParticipationRequest> requests = root.join("requests", JoinType.LEFT);
 
-            // LEFT JOIN значит: если у события нет заявок вообще,
-            // оно всё равно останется в результатах (а не пропадёт)
-
-            predicates.add(
-                    cb.or(
-                            // лимит = 0 → безлимит, пропускаем всех
-                            cb.equal(root.get("participantLimit"), 0),
-
-                            // количество заявок < лимита → места есть
-                            cb.lessThan(cb.count(requests), root.get("participantLimit"))
-                    )
-            );
-
             // группировка нужна чтобы COUNT работал правильно —
-            // "считай заявки ОТДЕЛЬНО для каждого события"
+            // считай заявки ОТДЕЛЬНО для каждого события
             query.groupBy(root.get("id"));
+
+            Predicate unlimited = cb.equal(root.get("participantLimit"), 0);
+
+            // количество заявок < лимита - места есть
+            // requests.get("id") - избавляет от дубликатов вместо просто requests
+            Predicate available = cb.lessThan(cb.count(requests.get("id")), root.get("participantLimit"));
+
+            // HAVING — фильтрует после GROUP BY и COUNT
+            query.having(cb.or(unlimited, available));
         }
 
         predicates.add(cb.equal(root.get("state"), EventState.PUBLISHED));

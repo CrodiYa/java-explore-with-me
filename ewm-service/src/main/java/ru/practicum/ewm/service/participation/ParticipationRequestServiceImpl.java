@@ -68,7 +68,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .status(ParticipationStatus.PENDING)
                 .build();
 
-        if (!event.getRequestModeration()) {
+        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
             request.setStatus(ParticipationStatus.CONFIRMED);
         }
 
