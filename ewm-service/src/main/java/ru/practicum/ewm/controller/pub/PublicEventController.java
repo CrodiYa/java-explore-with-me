@@ -3,7 +3,6 @@ package ru.practicum.ewm.controller.pub;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.model.event.EventFullDto;
 import ru.practicum.ewm.model.event.EventShortDto;
@@ -24,10 +23,8 @@ public class PublicEventController {
                                                 @RequestParam(required = false) List<Long> categories,
                                                 @RequestParam(required = false) Boolean paid,
                                                 @RequestParam(required = false)
-                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                                                 Instant rangeStart,
                                                 @RequestParam(required = false)
-                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
                                                 Instant rangeEnd,
                                                 @RequestParam(defaultValue = "false") boolean onlyAvailable,
                                                 @RequestParam(required = false) String sort,
