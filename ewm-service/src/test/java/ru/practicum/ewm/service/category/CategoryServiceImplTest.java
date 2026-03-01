@@ -188,16 +188,12 @@ public class CategoryServiceImplTest {
 
         @Test
         public void shouldThrowConflict() {
-            /* тест не прохоидт я его временно убрал посмотри свои категории
-            when(repository.existsByName("name")).thenReturn(true);
-
+            when(repository.existsByNameAndIdNot("name", 1L)).thenReturn(true);
             assertThrows(ConflictException.class,
                     () -> categoryService.patchCategory(1L, new CategoryDtoRequest("name")));
-
-            verify(repository).existsByName("name");
+            verify(repository).existsByNameAndIdNot("name", 1L);
             verify(repository, never()).findById(any(Long.class));
             verify(repository, never()).save(any(Category.class));
-            */
         }
     }
 
