@@ -3,14 +3,14 @@ package ru.practicum.ewm.service.event;
 import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.event.EventDtoRequest;
-import ru.practicum.ewm.model.event.EventFullDto;
-import ru.practicum.ewm.model.event.EventShortDto;
-import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.model.event.*;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface EventService {
+
+    Event findEntityById(Long id);
 
     /**
      * Retrieves a paginated list of events based on specified filters.
@@ -27,10 +27,17 @@ public interface EventService {
      * @param size       the number of elements to retrieve
      * @return list of events {@link EventFullDto} matching the specified criteria
      */
-    List<EventFullDto> findEvents(List<Long> users, List<EventState> states, List<Long> categories,
-                                  String rangeStart, String rangeEnd,
-                                  Integer from, Integer size);
+    List<EventFullDto> findAdminEvents(List<Long> users, List<EventState> states, List<Long> categories,
+                                       String rangeStart, String rangeEnd,
+                                       Integer from, Integer size);
 
+    // находит публичные события с фильтрацией
+    List<EventShortDto> findPublicEvents(String text, List<Long> categories, Boolean paid,
+                                        Instant rangeStart, Instant rangeEnd, boolean onlyAvailable,
+                                         String sort, Integer from, Integer size, String ip);
+
+    // Получение подробной информации о событии
+    EventFullDto findPublicEvent(Long eventId, String ip);
 
     /**
      * Retrieves a paginated list of events created by a specific user.
@@ -94,6 +101,7 @@ public interface EventService {
      * @throws ConflictException   if the event cannot be updated or a data integrity violation occurs
      */
     EventFullDto patchAdminEvent(Long eventId, EventDtoRequest request);
+
 
     /**
      * Checks if an event with the specified id exists.

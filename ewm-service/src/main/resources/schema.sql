@@ -29,3 +29,27 @@ CREATE TABLE IF NOT EXISTS event (
     FOREIGN KEY (initiator_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES category(id)
 );
+
+CREATE TABLE IF NOT EXISTS participation (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    event_id BIGINT NOT NULL,
+    requester_id BIGINT NOT NULL,
+    created TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(50) NOT NULL,
+    FOREIGN KEY (event_id) REFERENCES event(id),
+    FOREIGN KEY (requester_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS compilation (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    pinned BOOLEAN NOT NULL,
+    title VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS compilation_event (
+    compilation_id BIGINT NOT NULL,
+    event_id BIGINT NOT NULL,
+    PRIMARY KEY (compilation_id, event_id),
+    FOREIGN KEY (compilation_id) REFERENCES compilation(id),
+    FOREIGN KEY (event_id) REFERENCES event(id)
+);

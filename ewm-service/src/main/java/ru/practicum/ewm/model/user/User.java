@@ -1,4 +1,4 @@
-package ru.practicum.ewm.model.entity.user;
+package ru.practicum.ewm.model.user;
 
 import jakarta.persistence.*;
 import lombok.*;
