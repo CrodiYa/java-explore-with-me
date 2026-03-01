@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
 
         return createResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR,
                 request.getRequestURI(),
-                Collections.singletonMap("error", "Error"));
+                Collections.singletonMap("error", ex.getMessage()));
     }
 
     private ResponseEntity<ApiError> createResponseEntity(HttpStatus status, String path, Map<String, String> errors) {
