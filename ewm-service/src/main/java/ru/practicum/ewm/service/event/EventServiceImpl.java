@@ -176,8 +176,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto findEventById(Long userId, Long eventId) {
         userService.throwIfUserNotFound(userId);
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found"));
+        Event event = findEntityById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {
             throw new BadRequestException("UserId must match initiatorId");
@@ -250,9 +249,7 @@ public class EventServiceImpl implements EventService {
                 EventValidator.throwIfDateInvalid(request.getEventDate(), hoursBeforeStart);
             }
 
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found"));
-
+            Event event = findEntityById(eventId);
             EventStateAction action = request.getStateAction();
             EventValidator.throwIfStateTransitionInvalid(action, event.getState(), isAdmin);
 

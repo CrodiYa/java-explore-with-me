@@ -1,4 +1,4 @@
-package ru.practicum.ewm.model.request;
+package ru.practicum.ewm.model.category;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

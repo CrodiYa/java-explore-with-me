@@ -109,7 +109,10 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         log.info("requestModeration={}, participantLimit={}", event.getRequestModeration(), limit);
 
         // если модерация выключена (все идет автоматически) или лимита на запросы нет
-        if (!event.getRequestModeration() || limit == 0) {
+        boolean isModerationOff = !event.getRequestModeration() || limit == 0;
+        boolean idsEmpty = request.getRequestIds() == null || request.getRequestIds().isEmpty();
+
+        if (isModerationOff || idsEmpty) {
             return EventRequestStatusUpdateResult.builder()
                     .confirmedRequests(Collections.emptyList())
                     .rejectedRequests(Collections.emptyList())
@@ -126,7 +129,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         }
 
         for (ParticipationRequest pr : requests) {
-            if (!pr.getStatus().equals(ParticipationStatus.PENDING)) {
+            if (!ParticipationStatus.PENDING.equals(pr.getStatus())) {
                 throw new ConflictException("Статус можно изменить только у заявок в состоянии рассмотрения");
             }
 
@@ -147,7 +150,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         // если лимит исчерпался во время цикла, дошел до края цикла (пограничный случай)
         // Если при подтверждении данной заявки, лимит заявок для события исчерпан
         // то все неподтверждённые заявки необходимо отклонить
-        if (request.getStatus().equals(ParticipationStatus.CONFIRMED) && countConfirmed >= limit) {
+        if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed >= limit) {
             repository.rejectPendingRequests(eventId, ParticipationStatus.PENDING);
         }
 

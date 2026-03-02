@@ -10,8 +10,8 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.UserMapper;
 import ru.practicum.ewm.model.user.User;
-import ru.practicum.ewm.model.request.NewUserRequest;
-import ru.practicum.ewm.model.response.UserDto;
+import ru.practicum.ewm.model.user.NewUserRequest;
+import ru.practicum.ewm.model.user.UserDto;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.util.List;

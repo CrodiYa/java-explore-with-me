@@ -10,8 +10,8 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mappers.CategoryMapper;
 import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.request.CategoryDtoRequest;
-import ru.practicum.ewm.model.response.CategoryDto;
+import ru.practicum.ewm.model.category.CategoryDtoRequest;
+import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.repository.CategoryRepository;
 
 import java.util.List;

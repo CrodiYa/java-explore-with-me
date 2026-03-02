@@ -1,4 +1,4 @@
-package ru.practicum.ewm.model.response;
+package ru.practicum.ewm.model.category;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
