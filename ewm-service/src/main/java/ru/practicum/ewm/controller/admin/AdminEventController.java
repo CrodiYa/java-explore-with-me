@@ -43,5 +43,4 @@ public class AdminEventController {
 
         return eventService.patchAdminEvent(eventId, request);
     }
-
 }

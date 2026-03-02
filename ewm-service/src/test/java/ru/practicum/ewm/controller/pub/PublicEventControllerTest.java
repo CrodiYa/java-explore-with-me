@@ -13,11 +13,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.Formatter;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
+import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.event.EventFullDto;
 import ru.practicum.ewm.model.event.EventShortDto;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
-import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.user.UserDto;
 import ru.practicum.ewm.service.event.EventService;
 

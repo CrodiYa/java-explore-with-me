@@ -56,10 +56,9 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
             throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии");
         }
 
-        // если количество подтв ивентов больше или равно лимиту и сам лимит не равен 0 то
-        if (event.getParticipantLimit() != 0
-            && repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED)
-               >= event.getParticipantLimit()) {
+        Integer limit = event.getParticipantLimit();
+
+        if (limit != 0 && repository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED) >= limit) {
             throw new ConflictException("Достигнут лимит запросов на участие");
         }
 
@@ -69,7 +68,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .status(ParticipationStatus.PENDING)
                 .build();
 
-        if (!event.getRequestModeration() || event.getParticipantLimit() == 0) {
+        if (!event.getRequestModeration() || limit == 0) {
             request.setStatus(ParticipationStatus.CONFIRMED);
         }
 
@@ -78,8 +77,9 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
     @Override
     public ParticipationRequestDto cancelParticipationRequest(Long userId, Long requestId) {
-        ParticipationRequest request = repository.findById(requestId).orElseThrow(
-                () -> new NotFoundException("Заявка не найдена"));
+        ParticipationRequest request = repository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Заявка не найдена"));
+
         if (!request.getRequester().getId().equals(userId)) {
             throw new ConflictException("Нельзя отменить чужую заявку");
         }
@@ -100,15 +100,14 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     public EventRequestStatusUpdateResult updateStatusParticipationRequest(Long userId, Long eventId,
                                                                            EventRequestStatusUpdateRequest request) {
         Event event = getEventAndVerifyOwner(userId, eventId);
-        // проверяем лимиты после раннего выхода
-        int limit = event.getParticipantLimit();
 
+        int limit = event.getParticipantLimit();
         List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
         List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
 
         log.info("requestModeration={}, participantLimit={}", event.getRequestModeration(), limit);
 
-        // если модерация выключена (все идет автоматически) или лимита на запросы нет
+        // если модерация выключена или лимита на запросы нет
         boolean isModerationOff = !event.getRequestModeration() || limit == 0;
         boolean idsEmpty = request.getRequestIds() == null || request.getRequestIds().isEmpty();
 
@@ -123,7 +122,6 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         List<ParticipationRequest> requests = repository.findAllByIdIn(request.getRequestIds());
 
         // владелец хочет подтвердить, а лимит исчерпан
-        // при отклонении не важно, отклонять можно всегда
         if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed >= limit) {
             throw new ConflictException("Достигнут лимит подтвержденных заявок");
         }
@@ -133,8 +131,6 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 throw new ConflictException("Статус можно изменить только у заявок в состоянии рассмотрения");
             }
 
-            // request.getStatus() -  тело запроса от владельца.
-            // Он говорит "хочу эти заявки подтвердить" или "хочу отклонить"
             if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed < limit) {
                 pr.setStatus(ParticipationStatus.CONFIRMED);
                 countConfirmed++;
@@ -147,9 +143,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
         repository.saveAll(requests);
 
-        // если лимит исчерпался во время цикла, дошел до края цикла (пограничный случай)
-        // Если при подтверждении данной заявки, лимит заявок для события исчерпан
-        // то все неподтверждённые заявки необходимо отклонить
+        // если в процессе лимит превышен - отклоняем все оставшиеся заявки
         if (ParticipationStatus.CONFIRMED.equals(request.getStatus()) && countConfirmed >= limit) {
             repository.rejectPendingRequests(eventId, ParticipationStatus.PENDING);
         }

@@ -1,6 +1,7 @@
 package ru.practicum.ewm.controller.pub;
 
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +21,8 @@ public class PublicCompilationController {
     @GetMapping
     public List<CompilationDto> findCompilations(
             @RequestParam(required = false) Boolean pinned,
-            @RequestParam(defaultValue = "0") Integer from,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+            @RequestParam(defaultValue = "10") @Positive Integer size) {
         log.info("GET /compilations pinned={}", pinned);
         return compilationService.findCompilations(pinned, from, size);
     }

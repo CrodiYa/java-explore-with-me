@@ -4,6 +4,7 @@ import jakarta.persistence.criteria.*;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.participation.ParticipationRequest;
+import ru.practicum.ewm.model.participation.ParticipationStatus;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -39,29 +40,24 @@ public class PublicEventSpecification extends BaseEventSpecification {
             ));
         }
 
-        // сравниваем поле entity (root - само entity) и значение paid
         if (paid != null) {
             predicates.add(cb.equal(root.get("paid"), paid));
         }
 
         if (onlyAvailable) {
-            // "присоединяем" таблицу заявок к событиям
-            // root — это таблица events
-            // "requests" — название поля связи в твоей Entity (Event)
-            Join<Event, ParticipationRequest> requests = root.join("requests", JoinType.LEFT);
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<ParticipationRequest> subRoot = subquery.from(ParticipationRequest.class);
 
-            // группировка нужна чтобы COUNT работал правильно —
-            // считай заявки ОТДЕЛЬНО для каждого события
-            query.groupBy(root.get("id"));
+            subquery.select(cb.count(subRoot))
+                    .where(
+                            cb.equal(subRoot.get("event").get("id"), root.get("id")),
+                            cb.equal(subRoot.get("status"), ParticipationStatus.CONFIRMED)
+                    );
 
             Predicate unlimited = cb.equal(root.get("participantLimit"), 0);
+            Predicate available = cb.lessThan(subquery, root.get("participantLimit").as(Long.class));
 
-            // количество заявок < лимита - места есть
-            // requests.get("id") - избавляет от дубликатов вместо просто requests
-            Predicate available = cb.lessThan(cb.count(requests.get("id")), root.get("participantLimit"));
-
-            // HAVING — фильтрует после GROUP BY и COUNT
-            query.having(cb.or(unlimited, available));
+            predicates.add(cb.or(unlimited, available));
         }
 
         predicates.add(cb.equal(root.get("state"), EventState.PUBLISHED));
