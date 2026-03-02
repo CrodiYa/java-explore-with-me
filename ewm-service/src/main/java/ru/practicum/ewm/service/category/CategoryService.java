@@ -1,8 +1,8 @@
 package ru.practicum.ewm.service.category;
 
 import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.request.CategoryDtoRequest;
-import ru.practicum.ewm.model.response.CategoryDto;
+import ru.practicum.ewm.model.category.CategoryDtoRequest;
+import ru.practicum.ewm.model.category.CategoryDto;
 
 import java.util.List;
 

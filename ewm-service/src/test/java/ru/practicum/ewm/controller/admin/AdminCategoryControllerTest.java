@@ -15,8 +15,8 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.request.CategoryDtoRequest;
-import ru.practicum.ewm.model.response.CategoryDto;
+import ru.practicum.ewm.model.category.CategoryDtoRequest;
+import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.service.category.CategoryService;
 
 import static org.mockito.Mockito.doThrow;
@@ -192,7 +192,7 @@ public class AdminCategoryControllerTest {
                     .andExpect(status().isConflict());
         }
 
-        private RequestBuilder buildDeleteRequest(String id) throws JsonProcessingException {
+        private RequestBuilder buildDeleteRequest(String id) {
             return delete("/admin/categories/" + id);
         }
     }

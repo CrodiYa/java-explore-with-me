@@ -13,7 +13,6 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -69,14 +68,6 @@ public class GlobalExceptionHandler {
         return createResponseEntity(HttpStatus.CONFLICT,
                 request.getRequestURI(),
                 Collections.singletonMap("error", ex.getMessage()));
-    }
-
-    @ExceptionHandler(DateTimeParseException.class)
-    public ResponseEntity<ApiError> handleDateTimeParse(DateTimeParseException ex,
-                                                        HttpServletRequest request) {
-        logInfo(ex, request);
-        return createBadRequest(request.getRequestURI(),
-                Collections.singletonMap("error", "Invalid date format. Expected: yyyy-MM-dd HH:mm:ss"));
     }
 
     @ExceptionHandler(Exception.class)

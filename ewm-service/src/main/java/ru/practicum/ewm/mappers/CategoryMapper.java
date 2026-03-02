@@ -2,8 +2,8 @@ package ru.practicum.ewm.mappers;
 
 import org.mapstruct.*;
 import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.request.CategoryDtoRequest;
-import ru.practicum.ewm.model.response.CategoryDto;
+import ru.practicum.ewm.model.category.CategoryDtoRequest;
+import ru.practicum.ewm.model.category.CategoryDto;
 
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {

@@ -1,5 +1,6 @@
 package ru.practicum.ewm.controller.priv;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
@@ -54,14 +55,14 @@ public class PrivateEventController {
 
     @GetMapping("/{eventId}/requests")
     public List<ParticipationRequestDto> getRequests(@PathVariable @Positive Long userId,
-                                               @PathVariable @Positive Long eventId) {
+                                                     @PathVariable @Positive Long eventId) {
         return prService.findByEventId(userId, eventId);
     }
 
     @PatchMapping("/{eventId}/requests")
     public EventRequestStatusUpdateResult patchRequests(@PathVariable @Positive Long userId,
                                                         @PathVariable @Positive Long eventId,
-                                                        @RequestBody EventRequestStatusUpdateRequest request) {
+                                                        @RequestBody @Valid EventRequestStatusUpdateRequest request) {
         return prService.updateStatusParticipationRequest(userId, eventId, request);
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.model.response.CategoryDto;
+import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.service.category.CategoryService;
 
 import java.util.List;
@@ -80,5 +80,13 @@ public class PublicCategoryControllerTest {
         mockMvc.perform(get("/categories?size=a")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/categories?size=-1")).andExpect(status().isBadRequest());
         mockMvc.perform(get("/categories?size=0")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldThrowInternal() throws Exception {
+        when(categoryService.findById(1L)).thenThrow(RuntimeException.class);
+
+        mockMvc.perform(get("/categories/1"))
+                .andExpect(status().isInternalServerError());
     }
 }

@@ -1,5 +1,6 @@
 package ru.practicum.ewm.controller.priv;
 
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,20 +18,20 @@ public class PrivateParticipationRequestController {
     private final ParticipationRequestService service;
 
     @GetMapping
-    public List<ParticipationRequestDto> findByRequesterId(@PathVariable Long userId) {
+    public List<ParticipationRequestDto> findByRequesterId(@PathVariable @Positive Long userId) {
         return service.findByRequesterId(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ParticipationRequestDto addParticipationRequest(@PathVariable Long userId,
-                                                           @RequestParam Long eventId) {
+    public ParticipationRequestDto addParticipationRequest(@PathVariable @Positive Long userId,
+                                                           @RequestParam @Positive Long eventId) {
         return service.addParticipationRequest(userId, eventId);
     }
 
     @PatchMapping("/{requestId}/cancel")
-    public ParticipationRequestDto cancelParticipationRequest(@PathVariable Long userId,
-                                                              @PathVariable Long requestId) {
+    public ParticipationRequestDto cancelParticipationRequest(@PathVariable @Positive Long userId,
+                                                              @PathVariable @Positive Long requestId) {
         return service.cancelParticipationRequest(userId, requestId);
     }
 }

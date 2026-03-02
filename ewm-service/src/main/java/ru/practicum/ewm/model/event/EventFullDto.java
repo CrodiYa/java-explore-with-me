@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.ewm.model.response.CategoryDto;
-import ru.practicum.ewm.model.response.UserDto;
+import ru.practicum.ewm.model.category.CategoryDto;
+import ru.practicum.ewm.model.user.UserDto;
 
 @Data
 @Builder

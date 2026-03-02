@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.client.StatsClient;
 import ru.practicum.dto.EndpointHitDto;
@@ -114,19 +115,17 @@ public class EventServiceImpl implements EventService {
         PublicEventSpecification spec = new PublicEventSpecification(
                 onlyAvailable, rangeStart, rangeEnd, paid, categories, text);
 
-        // достаём события из БД по фильтрам с пагинацией
-        List<Event> events = eventRepository.findAll(spec, PageRequest.of(from / size, size)).getContent();
+        List<Event> events = eventRepository
+                .findAll(spec, PageRequest.of(from / size, size, Sort.by("eventDate")))
+                .getContent();
 
-        // собираем id всех событий чтобы одним запросом получить просмотры
         List<Long> ids = events.stream().map(Event::getId).toList();
-        // идём в сервис статистики и получаем { eventId - количество просмотров }
         Map<String, Long> viewsMap = getViewsMap(ids);
         Map<Long, Integer> confirmedMap = getConfirmedMap(ids);
 
         Stream<EventShortDto> stream = events.stream()
                 .map(event -> {
                     EventShortDto dto = eventMapper.toShortDto(event);
-                    // дешевле подставлять строку чем каждый раз делать излишнее склеивание
                     dto.setViews(viewsMap.getOrDefault(EVENT_KEY + event.getId(), 0L));
                     dto.setConfirmedRequests(confirmedMap.getOrDefault(event.getId(), 0));
                     return dto;
@@ -149,16 +148,18 @@ public class EventServiceImpl implements EventService {
                 .timestamp(Formatter.format(Instant.now()))
                 .build());
 
-        Event event = eventRepository.findEntityById(eventId);
+        Event event = findEntityById(eventId);
 
         if (!EventState.PUBLISHED.equals(event.getState())) {
             throw new NotFoundException("Событие не найдено");
         }
 
         EventFullDto dto = eventMapper.toFullDto(event);
+
         int confirmedRequests = requestRepository.countByEventIdAndStatus(eventId, ParticipationStatus.CONFIRMED);
-        // getViewsMap принимает List а не один id — оборачиваем
-        dto.setViews(getViewsMap(List.of(eventId)).getOrDefault(EVENT_KEY + eventId, 0L));
+        Map<String, Long> viewsMap = getViewsMap(Collections.singletonList(eventId));
+
+        dto.setViews(viewsMap.getOrDefault(EVENT_KEY + eventId, 0L));
         dto.setConfirmedRequests(confirmedRequests);
         return dto;
     }
@@ -176,8 +177,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto findEventById(Long userId, Long eventId) {
         userService.throwIfUserNotFound(userId);
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found"));
+        Event event = findEntityById(eventId);
 
         if (!event.getInitiator().getId().equals(userId)) {
             throw new BadRequestException("UserId must match initiatorId");
@@ -250,9 +250,7 @@ public class EventServiceImpl implements EventService {
                 EventValidator.throwIfDateInvalid(request.getEventDate(), hoursBeforeStart);
             }
 
-            Event event = eventRepository.findById(eventId)
-                    .orElseThrow(() -> new NotFoundException("Event with id " + eventId + " not found"));
-
+            Event event = findEntityById(eventId);
             EventStateAction action = request.getStateAction();
             EventValidator.throwIfStateTransitionInvalid(action, event.getState(), isAdmin);
 
@@ -295,7 +293,6 @@ public class EventServiceImpl implements EventService {
         return null;
     }
 
-    // Map<Long, Long> - 1ый это eventId, 2ой кол-во просмотров
     private Map<String, Long> getViewsMap(List<Long> eventIds) {
         if (eventIds.isEmpty()) return Collections.emptyMap();
 
@@ -311,13 +308,11 @@ public class EventServiceImpl implements EventService {
         List<ViewStatsDto> stats = statsClient.getStats(statsRequest);
         if (stats == null || stats.isEmpty()) return Collections.emptyMap();
 
-
         return stats.stream()
-                // stat - номер ивента
                 .collect(Collectors.toMap(
                         ViewStatsDto::getUri,
-                        ViewStatsDto::getHits, // "значением будет поле hits из dto
-                        Long::sum // если такой ключ уже есть — сложи старое и новое значение
+                        ViewStatsDto::getHits,
+                        Long::sum
                 ));
     }
 

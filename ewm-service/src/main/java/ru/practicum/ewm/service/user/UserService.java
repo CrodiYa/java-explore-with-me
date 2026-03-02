@@ -1,8 +1,8 @@
 package ru.practicum.ewm.service.user;
 
 import ru.practicum.ewm.model.user.User;
-import ru.practicum.ewm.model.request.NewUserRequest;
-import ru.practicum.ewm.model.response.UserDto;
+import ru.practicum.ewm.model.user.NewUserRequest;
+import ru.practicum.ewm.model.user.UserDto;
 
 import java.util.List;
 

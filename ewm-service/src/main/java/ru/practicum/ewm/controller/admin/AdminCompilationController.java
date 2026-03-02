@@ -39,6 +39,4 @@ public class AdminCompilationController {
         log.info("DELETE /admin/compilations/{}", compId);
         compilationService.deleteCompilation(compId);
     }
-
-
 }

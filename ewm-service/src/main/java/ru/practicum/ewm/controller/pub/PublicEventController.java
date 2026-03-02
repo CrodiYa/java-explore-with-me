@@ -1,6 +1,7 @@
 package ru.practicum.ewm.controller.pub;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class PublicEventController {
     }
 
     @GetMapping("/{id}")
-    public EventFullDto findPublicEvent(@PathVariable(name = "id") Long eventId,
+    public EventFullDto findPublicEvent(@PathVariable(name = "id") @Positive Long eventId,
                                         HttpServletRequest request) {
         return eventService.findPublicEvent(eventId, request.getRemoteAddr());
     }
