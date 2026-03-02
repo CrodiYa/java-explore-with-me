@@ -62,7 +62,6 @@ public class PrivateEventControllerTest {
 
     private final Long userId = 1L;
     private final Long eventId = 1L;
-    private final Long requestId = 1L;
     private final String baseUrl = "/users/{userId}/events";
 
     @BeforeEach
@@ -119,6 +118,7 @@ public class PrivateEventControllerTest {
                 .stateAction(EventStateAction.SEND_TO_REVIEW)
                 .build();
 
+        Long requestId = 1L;
         requestDto = ParticipationRequestDto.builder()
                 .id(requestId)
                 .requester(userId)

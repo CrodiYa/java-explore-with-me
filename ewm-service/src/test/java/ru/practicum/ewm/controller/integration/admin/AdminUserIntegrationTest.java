@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controller.integration;
+package ru.practicum.ewm.controller.integration.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,8 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.RandomHelper;
-import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.model.user.NewUserRequest;
+import ru.practicum.ewm.model.user.User;
 import ru.practicum.ewm.repository.UserRepository;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -131,7 +131,7 @@ public class AdminUserIntegrationTest {
                     .andExpect(status().isNotFound());
         }
 
-        private RequestBuilder buildDeleteRequest(String id) throws JsonProcessingException {
+        private RequestBuilder buildDeleteRequest(String id) {
             return delete("/admin/users/" + id);
         }
     }

@@ -192,7 +192,7 @@ public class AdminCategoryControllerTest {
                     .andExpect(status().isConflict());
         }
 
-        private RequestBuilder buildDeleteRequest(String id) throws JsonProcessingException {
+        private RequestBuilder buildDeleteRequest(String id) {
             return delete("/admin/categories/" + id);
         }
     }

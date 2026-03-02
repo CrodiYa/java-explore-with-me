@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(controllers = PublicEventController.class)
 @ContextConfiguration(classes = {PublicEventController.class, GlobalExceptionHandler.class})
 @TestPropertySource(properties = {"logging.level.root=ERROR", "spring.main.banner-mode=off"})
-class PublicEventControllerTest {
+public class PublicEventControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

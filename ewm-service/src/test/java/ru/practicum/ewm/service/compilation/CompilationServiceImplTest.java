@@ -97,7 +97,6 @@ public class CompilationServiceImplTest {
 
         @Test
         public void shouldAddCompilationWithEvents() {
-            Set<Event> events = Set.of(event1, event2);
 
             when(eventRepository.findAllById(eventIds)).thenReturn(List.of(event1, event2));
             when(compilationMapper.toEntity(newCompilationDto)).thenReturn(compilation);

@@ -305,7 +305,7 @@ public class EventServiceImplTest {
 
         @Test
         public void shouldReturnEventWithStatsAndHit() {
-            when(eventRepository.findEntityById(eventId)).thenReturn(event);
+            when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
             event.setState(EventState.PUBLISHED);
 
             EventFullDto fullDto = new EventFullDto();
@@ -329,9 +329,8 @@ public class EventServiceImplTest {
 
         @Test
         public void shouldThrowNotFoundExceptionWhenEventNotPublished() {
-            when(eventRepository.findEntityById(eventId)).thenReturn(event);
             event.setState(EventState.PENDING);
-
+            when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
             assertThrows(NotFoundException.class, () -> eventService.findPublicEvent(eventId, ip));
         }
     }

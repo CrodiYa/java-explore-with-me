@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controller.integration;
+package ru.practicum.ewm.controller.integration.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -56,7 +56,6 @@ public class ParticipationRequestServiceImplTest {
     private ArgumentCaptor<ParticipationRequest> requestCaptor;
 
     private User user;
-    private User initiator;
     private Event event;
     private ParticipationRequest request;
     private ParticipationRequestDto requestDto;
@@ -71,7 +70,7 @@ public class ParticipationRequestServiceImplTest {
         user.setId(userId);
         user.setName("Test User");
 
-        initiator = new User();
+        User initiator = new User();
         initiator.setId(initiatorId);
         initiator.setName("Initiator");
 
