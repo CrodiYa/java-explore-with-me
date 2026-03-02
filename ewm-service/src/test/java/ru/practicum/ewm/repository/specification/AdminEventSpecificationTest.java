@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class AdminEventSpecificationTest {
+public class AdminEventSpecificationTest {
 
     @Mock
     private Root<Event> root;
@@ -35,7 +35,7 @@ class AdminEventSpecificationTest {
     private Predicate predicate;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         lenient().when(cb.conjunction()).thenReturn(predicate);
         lenient().when(cb.and(any(Predicate[].class))).thenReturn(predicate);
         lenient().when(cb.greaterThanOrEqualTo(any(Path.class), any(Instant.class))).thenReturn(predicate);
@@ -46,7 +46,7 @@ class AdminEventSpecificationTest {
     }
 
     @Test
-    void shouldReturnPredicateWhenUsersAndStatesProvided() {
+    public void shouldReturnPredicateWhenUsersAndStatesProvided() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 List.of(1L, 2L),
                 List.of(EventState.PENDING, EventState.PUBLISHED),
@@ -61,7 +61,7 @@ class AdminEventSpecificationTest {
     }
 
     @Test
-    void shouldReturnPredicateWhenCategoriesProvided() {
+    public void shouldReturnPredicateWhenCategoriesProvided() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 null,
                 null,
@@ -76,7 +76,7 @@ class AdminEventSpecificationTest {
 
 
     @Test
-    void shouldReturnPredicateWhenRangeStartProvided() {
+    public void shouldReturnPredicateWhenRangeStartProvided() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 null,
                 null,
@@ -90,7 +90,7 @@ class AdminEventSpecificationTest {
     }
 
     @Test
-    void shouldReturnPredicateWhenRangeEndProvided() {
+    public void shouldReturnPredicateWhenRangeEndProvided() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 null,
                 null,
@@ -104,7 +104,7 @@ class AdminEventSpecificationTest {
     }
 
     @Test
-    void shouldReturnConjunctionWhenNoParams() {
+    public void shouldReturnConjunctionWhenNoParams() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 null,
                 null,
@@ -117,7 +117,7 @@ class AdminEventSpecificationTest {
     }
 
     @Test
-    void shouldReturnConjunctionWhenNoParamsEmpty() {
+    public void shouldReturnConjunctionWhenNoParamsEmpty() {
         AdminEventSpecification specification = new AdminEventSpecification(
                 List.of(),
                 List.of(),

@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PublicEventSpecificationTest {
+public class PublicEventSpecificationTest {
 
     @Mock
     private Root<Event> root;
@@ -33,7 +33,7 @@ class PublicEventSpecificationTest {
     private Join<Object, Object> join;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         lenient().when(cb.and(any(Predicate[].class))).thenReturn(predicate);
         lenient().when(cb.or(any(Predicate[].class))).thenReturn(predicate);
         lenient().when(cb.conjunction()).thenReturn(predicate);
@@ -52,7 +52,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddDefaultDateFilterWhenRangeNull() {
+    public void shouldAddDefaultDateFilterWhenRangeNull() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, null, null, null, null
         );
@@ -62,7 +62,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddTextFilterWhenTextProvided() {
+    public void shouldAddTextFilterWhenTextProvided() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, null, null, null, "text"
         );
@@ -73,7 +73,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddPaidFilterWhenPaidProvided() {
+    public void shouldAddPaidFilterWhenPaidProvided() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, null, true, null, null
         );
@@ -83,7 +83,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddOnlyAvailableFilterWhenTrue() {
+    public void shouldAddOnlyAvailableFilterWhenTrue() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 true, null, null, null, null, null
         );
@@ -94,7 +94,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddPublishedStateFilter() {
+    public void shouldAddPublishedStateFilter() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, null, null, null, null
         );
@@ -104,7 +104,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddCategoryFilter() {
+    public void shouldAddCategoryFilter() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, null, null, List.of(1L, 2L), null
         );
@@ -114,7 +114,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddRangeStartFilter() {
+    public void shouldAddRangeStartFilter() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, Instant.now(), null, null, null, null
         );
@@ -124,7 +124,7 @@ class PublicEventSpecificationTest {
     }
 
     @Test
-    void shouldAddRangeEndFilter() {
+    public void shouldAddRangeEndFilter() {
         PublicEventSpecification specification = new PublicEventSpecification(
                 false, null, Instant.now(), null, null, null
         );

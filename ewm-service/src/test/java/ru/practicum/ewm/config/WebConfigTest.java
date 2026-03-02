@@ -8,10 +8,10 @@ import java.time.Instant;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class WebConfigTest {
+public class WebConfigTest {
 
     @Test
-    void shouldAddStringToInstantConverter() {
+    public void shouldAddStringToInstantConverter() {
         WebConfig webConfig = new WebConfig();
         FormatterRegistry registry = mock(FormatterRegistry.class);
 

@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.RandomHelper;
 import ru.practicum.ewm.model.category.Category;
-import ru.practicum.ewm.model.request.CategoryDtoRequest;
+import ru.practicum.ewm.model.category.CategoryDtoRequest;
 import ru.practicum.ewm.repository.CategoryRepository;
 
 import java.util.Optional;
