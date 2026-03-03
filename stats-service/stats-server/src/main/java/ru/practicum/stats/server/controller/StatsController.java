@@ -3,17 +3,14 @@ package ru.practicum.stats.server.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.stats.server.service.StatsService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
-
-import static ru.practicum.dto.Formatter.PATTERN;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,8 +26,8 @@ public class StatsController {
     }
 
     @GetMapping("/stats")
-    public List<ViewStatsDto> getStats(@RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime start,
-                                       @RequestParam @DateTimeFormat(pattern = PATTERN) LocalDateTime end,
+    public List<ViewStatsDto> getStats(@RequestParam Instant start,
+                                       @RequestParam Instant end,
                                        @RequestParam(required = false) List<String> uris,
                                        @RequestParam(defaultValue = "false") boolean unique) {
         log.info("Поступил запрос на получение статистики запросов c параметрами start: {}, end {}, uris {}, unique {}",

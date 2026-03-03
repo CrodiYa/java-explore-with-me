@@ -1,29 +1,18 @@
 package ru.practicum.stats.server.mapper;
 
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.dto.EndpointHitDto;
+import ru.practicum.dto.Formatter;
 import ru.practicum.stats.server.model.EndpointHit;
 
-import java.time.LocalDateTime;
+@Mapper(componentModel = "spring", imports = Formatter.class)
+public interface DtoMapper {
 
-import static ru.practicum.dto.Formatter.FORMATTER;
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createDate", expression = "java(Formatter.toInstant(dto.getTimestamp()))")
+    EndpointHit toEndpoint(EndpointHitDto dto);
 
-public class DtoMapper {
-
-    public static EndpointHit toEndpoint(EndpointHitDto dto) {
-        return EndpointHit.builder()
-                .app(dto.getApp())
-                .ip(dto.getIp())
-                .uri(dto.getUri())
-                .createDate(LocalDateTime.parse(dto.getTimestamp(), FORMATTER))
-                .build();
-    }
-
-    public static EndpointHitDto from(EndpointHit hit) {
-        return EndpointHitDto.builder()
-                .ip(hit.getIp())
-                .app(hit.getApp())
-                .uri(hit.getUri())
-                .timestamp(hit.getCreateDate().format(FORMATTER))
-                .build();
-    }
+    @Mapping(target = "timestamp", expression = "java(Formatter.format(hit.getCreateDate()))")
+    EndpointHitDto toEndpointDto(EndpointHit hit);
 }
