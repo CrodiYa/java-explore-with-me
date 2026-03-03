@@ -3,7 +3,6 @@ package ru.practicum.ewm.controller.integration.admin;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -42,96 +41,89 @@ public class AdminCategoryIntegrationTest {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @Nested
-    class PostCategory {
 
-        @Test
-        public void shouldCreate() throws Exception {
-            CategoryDtoRequest request = new CategoryDtoRequest(RandomHelper.getRandomString());
+    @Test
+    public void shouldCreate() throws Exception {
+        CategoryDtoRequest request = new CategoryDtoRequest(RandomHelper.getRandomString());
 
-            String responseContent = mockMvc.perform(buildPostRequest(request))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.name").value(request.getName()))
-                    .andReturn()
-                    .getResponse()
-                    .getContentAsString();
+        String responseContent = mockMvc.perform(buildPostRequest(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value(request.getName()))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-            JsonNode jsonNode = objectMapper.readTree(responseContent);
-            Long returnedId = jsonNode.get("id").asLong();
+        JsonNode jsonNode = objectMapper.readTree(responseContent);
+        Long returnedId = jsonNode.get("id").asLong();
 
-            Optional<Category> category = categoryRepository.findById(returnedId);
-            assertThat(category).isPresent();
-            assertThat(category.get().getName()).isEqualTo(request.getName());
-        }
-
-        @Test
-        public void shouldReturnConflictWhenConflict() throws Exception {
-            String name = RandomHelper.getRandomString();
-            categoryRepository.save(new Category(null, name));
-
-            CategoryDtoRequest request = new CategoryDtoRequest(name);
-
-            mockMvc.perform(buildPostRequest(request))
-                    .andExpect(status().isConflict());
-        }
-
-        private RequestBuilder buildPostRequest(CategoryDtoRequest request) throws JsonProcessingException {
-            return post("/admin/categories")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request));
-        }
+        Optional<Category> category = categoryRepository.findById(returnedId);
+        assertThat(category).isPresent();
+        assertThat(category.get().getName()).isEqualTo(request.getName());
     }
 
-    @Nested
-    class PatchCategory {
+    @Test
+    public void shouldReturnConflictWhenConflict() throws Exception {
+        String name = RandomHelper.getRandomString();
+        categoryRepository.save(new Category(null, name));
 
-        @Test
-        public void shouldPatch() throws Exception {
+        CategoryDtoRequest request = new CategoryDtoRequest(name);
 
-            Category category = categoryRepository.save(new Category(null, RandomHelper.getRandomString()));
-            categoryRepository.flush();
-            String newName = RandomHelper.getRandomString();
+        mockMvc.perform(buildPostRequest(request))
+                .andExpect(status().isConflict());
+    }
 
-            CategoryDtoRequest request = new CategoryDtoRequest(newName);
+    @Test
+    public void shouldPatch() throws Exception {
 
-            mockMvc.perform(buildPatchRequest(category.getId(), request))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id").value(category.getId()))
-                    .andExpect(jsonPath("$.name").value(newName));
+        Category category = categoryRepository.save(new Category(null, RandomHelper.getRandomString()));
+        categoryRepository.flush();
+        String newName = RandomHelper.getRandomString();
 
-            Optional<Category> patched = categoryRepository.findById(category.getId());
+        CategoryDtoRequest request = new CategoryDtoRequest(newName);
 
-            assertThat(patched).isPresent();
-            assertThat(patched.get().getName()).isEqualTo(request.getName());
-        }
+        mockMvc.perform(buildPatchRequest(category.getId(), request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(category.getId()))
+                .andExpect(jsonPath("$.name").value(newName));
 
-        @Test
-        public void shouldReturnNotFoundWhenNotFound() throws Exception {
-            CategoryDtoRequest request = new CategoryDtoRequest(RandomHelper.getRandomString());
+        Optional<Category> patched = categoryRepository.findById(category.getId());
 
-            mockMvc.perform(buildPatchRequest("10002", request))
-                    .andExpect(status().isNotFound());
-        }
+        assertThat(patched).isPresent();
+        assertThat(patched.get().getName()).isEqualTo(request.getName());
+    }
 
-        @Test
-        public void shouldReturnConflictWhenConflict() throws Exception {
-            String name = RandomHelper.getRandomString();
+    @Test
+    public void shouldReturnNotFoundWhenNotFound() throws Exception {
+        CategoryDtoRequest request = new CategoryDtoRequest(RandomHelper.getRandomString());
 
-            Long id = categoryRepository.save(new Category(null, RandomHelper.getRandomString())).getId();
-            categoryRepository.save(new Category(null, name));
+        mockMvc.perform(buildPatchRequest("10002", request))
+                .andExpect(status().isNotFound());
+    }
 
-            mockMvc.perform(buildPatchRequest(id, new CategoryDtoRequest(name)))
-                    .andExpect(status().isConflict());
-        }
+    @Test
+    public void shouldReturnConflictWhenConflictPatch() throws Exception {
+        String name = RandomHelper.getRandomString();
 
-        private RequestBuilder buildPatchRequest(String id, CategoryDtoRequest request) throws JsonProcessingException {
-            return patch("/admin/categories/" + id)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request));
-        }
+        Long id = categoryRepository.save(new Category(null, RandomHelper.getRandomString())).getId();
+        categoryRepository.save(new Category(null, name));
 
-        private RequestBuilder buildPatchRequest(Long id, CategoryDtoRequest request) throws JsonProcessingException {
-            return buildPatchRequest(id + "", request);
-        }
+        mockMvc.perform(buildPatchRequest(id, new CategoryDtoRequest(name)))
+                .andExpect(status().isConflict());
+    }
+
+    private RequestBuilder buildPatchRequest(String id, CategoryDtoRequest request) throws JsonProcessingException {
+        return patch("/admin/categories/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request));
+    }
+
+    private RequestBuilder buildPatchRequest(Long id, CategoryDtoRequest request) throws JsonProcessingException {
+        return buildPatchRequest(id + "", request);
+    }
+
+    private RequestBuilder buildPostRequest(CategoryDtoRequest request) throws JsonProcessingException {
+        return post("/admin/categories")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request));
     }
 }

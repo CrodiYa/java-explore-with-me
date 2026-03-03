@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -22,12 +21,14 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = AdminCompilationController.class)
 @ContextConfiguration(classes = {AdminCompilationController.class, GlobalExceptionHandler.class})
@@ -74,182 +75,173 @@ public class AdminCompilationControllerTest {
                 .build();
     }
 
-    @Nested
-    class AddingCompilation {
 
-        @Test
-        public void shouldAddCompilation() throws Exception {
-            when(compilationService.addCompilation(any(NewCompilationDto.class)))
-                    .thenReturn(compilationDto);
+    @Test
+    public void shouldAddCompilation() throws Exception {
+        when(compilationService.addCompilation(any(NewCompilationDto.class)))
+                .thenReturn(compilationDto);
 
-            mockMvc.perform(post("/admin/compilations")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .characterEncoding(StandardCharsets.UTF_8)
-                            .content(objectMapper.writeValueAsString(newCompilationDto)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Test Compilation")))
-                    .andExpect(jsonPath("$.pinned", is(true)))
-                    .andExpect(jsonPath("$.events", hasSize(1)));
+        mockMvc.perform(post("/admin/compilations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .content(objectMapper.writeValueAsString(newCompilationDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Test Compilation")))
+                .andExpect(jsonPath("$.pinned", is(true)))
+                .andExpect(jsonPath("$.events", hasSize(1)));
 
-            verify(compilationService).addCompilation(any(NewCompilationDto.class));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAddingCompilationWithBlankTitle() throws Exception {
-            NewCompilationDto invalidDto = NewCompilationDto.builder()
-                    .title("")
-                    .pinned(true)
-                    .build();
-
-            mockMvc.perform(post("/admin/compilations")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidDto)))
-                    .andExpect(status().isBadRequest());
-
-            verify(compilationService, never()).addCompilation(any());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAddingCompilationWithTitleTooLong() throws Exception {
-            String longTitle = "a".repeat(51);
-            NewCompilationDto invalidDto = NewCompilationDto.builder()
-                    .title(longTitle)
-                    .pinned(true)
-                    .build();
-
-            mockMvc.perform(post("/admin/compilations")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidDto)))
-                    .andExpect(status().isBadRequest());
-
-            verify(compilationService, never()).addCompilation(any());
-        }
-
-        @Test
-        public void shouldAddCompilationWithDefaultPinnedValue() throws Exception {
-            NewCompilationDto dtoWithDefaultPinned = NewCompilationDto.builder()
-                    .title("Default Pinned")
-                    .events(Set.of(1L))
-                    .build();
-
-            CompilationDto resultDto = CompilationDto.builder()
-                    .id(2L)
-                    .title("Default Pinned")
-                    .pinned(false)
-                    .events(List.of())
-                    .build();
-
-            when(compilationService.addCompilation(any(NewCompilationDto.class)))
-                    .thenReturn(resultDto);
-
-            mockMvc.perform(post("/admin/compilations")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(dtoWithDefaultPinned)))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.pinned", is(false)));
-
-            verify(compilationService).addCompilation(any(NewCompilationDto.class));
-        }
+        verify(compilationService).addCompilation(any(NewCompilationDto.class));
     }
 
-    @Nested
-    class UpdatingCompilation {
+    @Test
+    public void shouldReturnBadRequestWhenAddingCompilationWithBlankTitle() throws Exception {
+        NewCompilationDto invalidDto = NewCompilationDto.builder()
+                .title("")
+                .pinned(true)
+                .build();
 
-        @Test
-        public void shouldUpdateCompilation() throws Exception {
-            when(compilationService.updateCompilation(eq(1L), any(UpdateCompilationRequest.class)))
-                    .thenReturn(compilationDto);
+        mockMvc.perform(post("/admin/compilations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest());
 
-            mockMvc.perform(patch("/admin/compilations/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Test Compilation")));
-
-            verify(compilationService).updateCompilation(eq(1L), any(UpdateCompilationRequest.class));
-        }
-
-        @Test
-        public void shouldUpdateCompilationWithOnlyTitle() throws Exception {
-            UpdateCompilationRequest request = UpdateCompilationRequest.builder()
-                    .title("Only Title")
-                    .build();
-
-            CompilationDto updatedDto = CompilationDto.builder()
-                    .id(1L)
-                    .title("Only Title")
-                    .pinned(true)
-                    .events(List.of())
-                    .build();
-
-            when(compilationService.updateCompilation(eq(1L), any(UpdateCompilationRequest.class)))
-                    .thenReturn(updatedDto);
-
-            mockMvc.perform(patch("/admin/compilations/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.title", is("Only Title")))
-                    .andExpect(jsonPath("$.pinned", is(true)));
-
-            verify(compilationService).updateCompilation(eq(1L), any(UpdateCompilationRequest.class));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUpdatingWithTitleTooLong() throws Exception {
-            String longTitle = "a".repeat(51);
-            UpdateCompilationRequest invalidRequest = UpdateCompilationRequest.builder()
-                    .title(longTitle)
-                    .build();
-
-            mockMvc.perform(patch("/admin/compilations/1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(invalidRequest)))
-                    .andExpect(status().isBadRequest());
-
-            verify(compilationService, never()).updateCompilation(anyLong(), any());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUpdatingWithNegativeCompilationId() throws Exception {
-            mockMvc.perform(patch("/admin/compilations/-1")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-
-            verify(compilationService, never()).updateCompilation(anyLong(), any());
-        }
+        verify(compilationService, never()).addCompilation(any());
     }
 
-    @Nested
-    class DeletingCompilation {
+    @Test
+    public void shouldReturnBadRequestWhenAddingCompilationWithTitleTooLong() throws Exception {
+        String longTitle = "a".repeat(51);
+        NewCompilationDto invalidDto = NewCompilationDto.builder()
+                .title(longTitle)
+                .pinned(true)
+                .build();
 
-        @Test
-        public void shouldDeleteCompilation() throws Exception {
-            doNothing().when(compilationService).deleteCompilation(1L);
+        mockMvc.perform(post("/admin/compilations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidDto)))
+                .andExpect(status().isBadRequest());
 
-            mockMvc.perform(delete("/admin/compilations/1"))
-                    .andExpect(status().isNoContent());
+        verify(compilationService, never()).addCompilation(any());
+    }
 
-            verify(compilationService).deleteCompilation(1L);
-        }
+    @Test
+    public void shouldAddCompilationWithDefaultPinnedValue() throws Exception {
+        NewCompilationDto dtoWithDefaultPinned = NewCompilationDto.builder()
+                .title("Default Pinned")
+                .events(Set.of(1L))
+                .build();
 
-        @Test
-        public void shouldReturnBadRequestWhenDeletingWithNegativeCompilationId() throws Exception {
-            mockMvc.perform(delete("/admin/compilations/-1"))
-                    .andExpect(status().isBadRequest());
+        CompilationDto resultDto = CompilationDto.builder()
+                .id(2L)
+                .title("Default Pinned")
+                .pinned(false)
+                .events(List.of())
+                .build();
 
-            verify(compilationService, never()).deleteCompilation(anyLong());
-        }
+        when(compilationService.addCompilation(any(NewCompilationDto.class)))
+                .thenReturn(resultDto);
 
-        @Test
-        public void shouldReturnBadRequestWhenDeletingWithZeroCompilationId() throws Exception {
-            mockMvc.perform(delete("/admin/compilations/0"))
-                    .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/admin/compilations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dtoWithDefaultPinned)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pinned", is(false)));
 
-            verify(compilationService, never()).deleteCompilation(anyLong());
-        }
+        verify(compilationService).addCompilation(any(NewCompilationDto.class));
+    }
+
+
+    @Test
+    public void shouldUpdateCompilation() throws Exception {
+        when(compilationService.updateCompilation(eq(1L), any(UpdateCompilationRequest.class)))
+                .thenReturn(compilationDto);
+
+        mockMvc.perform(patch("/admin/compilations/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Test Compilation")));
+
+        verify(compilationService).updateCompilation(eq(1L), any(UpdateCompilationRequest.class));
+    }
+
+    @Test
+    public void shouldUpdateCompilationWithOnlyTitle() throws Exception {
+        UpdateCompilationRequest request = UpdateCompilationRequest.builder()
+                .title("Only Title")
+                .build();
+
+        CompilationDto updatedDto = CompilationDto.builder()
+                .id(1L)
+                .title("Only Title")
+                .pinned(true)
+                .events(List.of())
+                .build();
+
+        when(compilationService.updateCompilation(eq(1L), any(UpdateCompilationRequest.class)))
+                .thenReturn(updatedDto);
+
+        mockMvc.perform(patch("/admin/compilations/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title", is("Only Title")))
+                .andExpect(jsonPath("$.pinned", is(true)));
+
+        verify(compilationService).updateCompilation(eq(1L), any(UpdateCompilationRequest.class));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUpdatingWithTitleTooLong() throws Exception {
+        String longTitle = "a".repeat(51);
+        UpdateCompilationRequest invalidRequest = UpdateCompilationRequest.builder()
+                .title(longTitle)
+                .build();
+
+        mockMvc.perform(patch("/admin/compilations/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).updateCompilation(anyLong(), any());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUpdatingWithNegativeCompilationId() throws Exception {
+        mockMvc.perform(patch("/admin/compilations/-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).updateCompilation(anyLong(), any());
+    }
+
+
+    @Test
+    public void shouldDeleteCompilation() throws Exception {
+        doNothing().when(compilationService).deleteCompilation(1L);
+
+        mockMvc.perform(delete("/admin/compilations/1"))
+                .andExpect(status().isNoContent());
+
+        verify(compilationService).deleteCompilation(1L);
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDeletingWithNegativeCompilationId() throws Exception {
+        mockMvc.perform(delete("/admin/compilations/-1"))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).deleteCompilation(anyLong());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDeletingWithZeroCompilationId() throws Exception {
+        mockMvc.perform(delete("/admin/compilations/0"))
+                .andExpect(status().isBadRequest());
+
+        verify(compilationService, never()).deleteCompilation(anyLong());
     }
 }

@@ -1,7 +1,6 @@
 package ru.practicum.ewm.service.compilation;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -92,293 +91,274 @@ public class CompilationServiceImplTest {
                 .build();
     }
 
-    @Nested
-    class AddingCompilation {
 
-        @Test
-        public void shouldAddCompilationWithEvents() {
+    @Test
+    public void shouldAddCompilationWithEvents() {
 
-            when(eventRepository.findAllById(eventIds)).thenReturn(List.of(event1, event2));
-            when(compilationMapper.toEntity(newCompilationDto)).thenReturn(compilation);
-            when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+        when(eventRepository.findAllById(eventIds)).thenReturn(List.of(event1, event2));
+        when(compilationMapper.toEntity(newCompilationDto)).thenReturn(compilation);
+        when(compilationRepository.save(any(Compilation.class))).thenReturn(compilation);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
 
-            CompilationDto result = compilationService.addCompilation(newCompilationDto);
+        CompilationDto result = compilationService.addCompilation(newCompilationDto);
 
-            assertNotNull(result);
-            assertEquals(compilationDto.getId(), result.getId());
-            assertEquals(compilationDto.getTitle(), result.getTitle());
-            assertEquals(compilationDto.getPinned(), result.getPinned());
+        assertNotNull(result);
+        assertEquals(compilationDto.getId(), result.getId());
+        assertEquals(compilationDto.getTitle(), result.getTitle());
+        assertEquals(compilationDto.getPinned(), result.getPinned());
 
-            verify(eventRepository).findAllById(eventIds);
-            verify(compilationMapper).toEntity(newCompilationDto);
-            verify(compilationRepository).save(compilation);
-            verify(compilationMapper).toDto(compilation);
-        }
-
-        @Test
-        public void shouldAddCompilationWithoutEvents() {
-            NewCompilationDto dtoWithoutEvents = NewCompilationDto.builder()
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(null)
-                    .build();
-
-            Compilation emptyCompilation = Compilation.builder()
-                    .id(2L)
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(new HashSet<>())
-                    .build();
-
-            CompilationDto emptyCompilationDto = CompilationDto.builder()
-                    .id(2L)
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(List.of())
-                    .build();
-
-            when(compilationMapper.toEntity(dtoWithoutEvents)).thenReturn(emptyCompilation);
-            when(compilationRepository.save(emptyCompilation)).thenReturn(emptyCompilation);
-            when(compilationMapper.toDto(emptyCompilation)).thenReturn(emptyCompilationDto);
-
-            CompilationDto result = compilationService.addCompilation(dtoWithoutEvents);
-
-            assertNotNull(result);
-            assertEquals(emptyCompilationDto.getId(), result.getId());
-            assertTrue(result.getEvents().isEmpty());
-
-            verify(eventRepository, never()).findAllById(anySet());
-            verify(compilationRepository).save(emptyCompilation);
-        }
-
-        @Test
-        public void shouldAddCompilationWithEmptyEventSet() {
-            NewCompilationDto dtoWithEmptyEvents = NewCompilationDto.builder()
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(Set.of())
-                    .build();
-
-            Compilation emptyCompilation = Compilation.builder()
-                    .id(2L)
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(new HashSet<>())
-                    .build();
-
-            CompilationDto emptyCompilationDto = CompilationDto.builder()
-                    .id(2L)
-                    .title("Empty Compilation")
-                    .pinned(false)
-                    .events(List.of())
-                    .build();
-
-            when(compilationMapper.toEntity(dtoWithEmptyEvents)).thenReturn(emptyCompilation);
-            when(compilationRepository.save(emptyCompilation)).thenReturn(emptyCompilation);
-            when(compilationMapper.toDto(emptyCompilation)).thenReturn(emptyCompilationDto);
-
-            CompilationDto result = compilationService.addCompilation(dtoWithEmptyEvents);
-
-            assertNotNull(result);
-            assertTrue(result.getEvents().isEmpty());
-            verify(eventRepository, never()).findAllById(anySet());
-        }
+        verify(eventRepository).findAllById(eventIds);
+        verify(compilationMapper).toEntity(newCompilationDto);
+        verify(compilationRepository).save(compilation);
+        verify(compilationMapper).toDto(compilation);
     }
 
-    @Nested
-    class UpdatingCompilation {
+    @Test
+    public void shouldAddCompilationWithoutEvents() {
+        NewCompilationDto dtoWithoutEvents = NewCompilationDto.builder()
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(null)
+                .build();
 
-        @Test
-        public void shouldUpdateAllFields() {
-            when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
-            when(eventRepository.findAllById(eventIds)).thenReturn(List.of(event1, event2));
-            when(compilationRepository.save(compilation)).thenReturn(compilation);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+        Compilation emptyCompilation = Compilation.builder()
+                .id(2L)
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(new HashSet<>())
+                .build();
 
-            CompilationDto result = compilationService.updateCompilation(1L, updateRequest);
+        CompilationDto emptyCompilationDto = CompilationDto.builder()
+                .id(2L)
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(List.of())
+                .build();
 
-            assertNotNull(result);
-            verify(compilationMapper).merge(compilation, updateRequest);
-            verify(compilationRepository).save(compilation);
-            verify(eventRepository).findAllById(eventIds);
-        }
+        when(compilationMapper.toEntity(dtoWithoutEvents)).thenReturn(emptyCompilation);
+        when(compilationRepository.save(emptyCompilation)).thenReturn(emptyCompilation);
+        when(compilationMapper.toDto(emptyCompilation)).thenReturn(emptyCompilationDto);
 
-        @Test
-        public void shouldUpdateOnlyTitle() {
-            UpdateCompilationRequest request = UpdateCompilationRequest.builder()
-                    .title("Only Title Update")
-                    .build();
+        CompilationDto result = compilationService.addCompilation(dtoWithoutEvents);
 
-            when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
-            when(compilationRepository.save(compilation)).thenReturn(compilation);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+        assertNotNull(result);
+        assertEquals(emptyCompilationDto.getId(), result.getId());
+        assertTrue(result.getEvents().isEmpty());
 
-            CompilationDto result = compilationService.updateCompilation(1L, request);
-
-            assertNotNull(result);
-            verify(compilationMapper).merge(compilation, request);
-            verify(compilationRepository).save(compilation);
-            verify(eventRepository, never()).findAllById(anySet());
-        }
-
-        @Test
-        public void shouldUpdateOnlyPinned() {
-            UpdateCompilationRequest request = UpdateCompilationRequest.builder()
-                    .pinned(false)
-                    .build();
-
-            when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
-            when(compilationRepository.save(compilation)).thenReturn(compilation);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
-
-            CompilationDto result = compilationService.updateCompilation(1L, request);
-
-            assertNotNull(result);
-            verify(compilationMapper).merge(compilation, request);
-            verify(compilationRepository).save(compilation);
-            verify(eventRepository, never()).findAllById(anySet());
-        }
-
-        @Test
-        public void shouldUpdateOnlyEvents() {
-            UpdateCompilationRequest request = UpdateCompilationRequest.builder()
-                    .events(Set.of(1L))
-                    .build();
-
-            when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
-            when(eventRepository.findAllById(Set.of(1L))).thenReturn(List.of(event1));
-            when(compilationRepository.save(compilation)).thenReturn(compilation);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
-
-            CompilationDto result = compilationService.updateCompilation(1L, request);
-
-            assertNotNull(result);
-            verify(compilationMapper).merge(compilation, request);
-            verify(compilationRepository).save(compilation);
-            verify(eventRepository).findAllById(Set.of(1L));
-        }
-
-        @Test
-        public void shouldThrowNotFoundExceptionWhenUpdatingNonExistingCompilation() {
-            when(compilationRepository.findById(999L)).thenReturn(Optional.empty());
-
-            NotFoundException exception = assertThrows(NotFoundException.class,
-                    () -> compilationService.updateCompilation(999L, updateRequest));
-
-            assertEquals("Подборка не найдена", exception.getMessage());
-            verify(compilationRepository, never()).save(any());
-        }
+        verify(eventRepository, never()).findAllById(anySet());
+        verify(compilationRepository).save(emptyCompilation);
     }
 
-    @Nested
-    class DeletingCompilation {
+    @Test
+    public void shouldAddCompilationWithEmptyEventSet() {
+        NewCompilationDto dtoWithEmptyEvents = NewCompilationDto.builder()
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(Set.of())
+                .build();
 
-        @Test
-        public void shouldDeleteExistingCompilation() {
-            when(compilationRepository.existsById(1L)).thenReturn(true);
+        Compilation emptyCompilation = Compilation.builder()
+                .id(2L)
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(new HashSet<>())
+                .build();
 
-            compilationService.deleteCompilation(1L);
+        CompilationDto emptyCompilationDto = CompilationDto.builder()
+                .id(2L)
+                .title("Empty Compilation")
+                .pinned(false)
+                .events(List.of())
+                .build();
 
-            verify(compilationRepository).deleteById(1L);
-        }
+        when(compilationMapper.toEntity(dtoWithEmptyEvents)).thenReturn(emptyCompilation);
+        when(compilationRepository.save(emptyCompilation)).thenReturn(emptyCompilation);
+        when(compilationMapper.toDto(emptyCompilation)).thenReturn(emptyCompilationDto);
 
-        @Test
-        public void shouldThrowNotFoundExceptionWhenDeletingNonExistingCompilation() {
-            when(compilationRepository.existsById(999L)).thenReturn(false);
+        CompilationDto result = compilationService.addCompilation(dtoWithEmptyEvents);
 
-            NotFoundException exception = assertThrows(NotFoundException.class,
-                    () -> compilationService.deleteCompilation(999L));
-
-            assertEquals("Подборка не найдена", exception.getMessage());
-            verify(compilationRepository, never()).deleteById(any());
-        }
+        assertNotNull(result);
+        assertTrue(result.getEvents().isEmpty());
+        verify(eventRepository, never()).findAllById(anySet());
     }
 
-    @Nested
-    class FindingCompilations {
+    @Test
+    public void shouldUpdateAllFields() {
+        when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
+        when(eventRepository.findAllById(eventIds)).thenReturn(List.of(event1, event2));
+        when(compilationRepository.save(compilation)).thenReturn(compilation);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
 
-        @Test
-        public void shouldFindAllCompilationsWithoutPinnedFilter() {
-            List<Compilation> compilations = List.of(compilation);
-            PageRequest pageRequest = PageRequest.of(0, 10);
+        CompilationDto result = compilationService.updateCompilation(1L, updateRequest);
 
-            when(compilationRepository.findAll(pageRequest)).thenReturn(new PageImpl<>(compilations));
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
-
-            List<CompilationDto> result = compilationService.findCompilations(null, 0, 10);
-
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            verify(compilationRepository).findAll(pageRequest);
-            verify(compilationRepository, never()).findByPinned(anyBoolean(), any());
-        }
-
-        @Test
-        public void shouldFindPinnedCompilations() {
-            List<Compilation> compilations = List.of(compilation);
-            PageRequest pageRequest = PageRequest.of(0, 10);
-
-            when(compilationRepository.findByPinned(true, pageRequest)).thenReturn(compilations);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
-
-            List<CompilationDto> result = compilationService.findCompilations(true, 0, 10);
-
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            verify(compilationRepository).findByPinned(true, pageRequest);
-            verify(compilationRepository, never()).findAll();
-        }
-
-        @Test
-        public void shouldFindNotPinnedCompilations() {
-            List<Compilation> compilations = List.of(compilation);
-            PageRequest pageRequest = PageRequest.of(0, 10);
-
-            when(compilationRepository.findByPinned(false, pageRequest)).thenReturn(compilations);
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
-
-            List<CompilationDto> result = compilationService.findCompilations(false, 0, 10);
-
-            assertNotNull(result);
-            assertEquals(1, result.size());
-            verify(compilationRepository).findByPinned(false, pageRequest);
-        }
-
-        @Test
-        public void shouldHandlePaginationCorrectly() {
-            PageRequest expectedPageRequest = PageRequest.of(1, 5);
-
-            when(compilationRepository.findAll(expectedPageRequest)).thenReturn(new PageImpl<>(List.of()));
-
-            compilationService.findCompilations(null, 5, 5);
-
-            verify(compilationRepository).findAll(PageRequest.of(1, 5));
-        }
+        assertNotNull(result);
+        verify(compilationMapper).merge(compilation, updateRequest);
+        verify(compilationRepository).save(compilation);
+        verify(eventRepository).findAllById(eventIds);
     }
 
-    @Nested
-    class FindingCompilationById {
+    @Test
+    public void shouldUpdateOnlyTitle() {
+        UpdateCompilationRequest request = UpdateCompilationRequest.builder()
+                .title("Only Title Update")
+                .build();
 
-        @Test
-        public void shouldFindExistingCompilationById() {
-            when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
-            when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+        when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
+        when(compilationRepository.save(compilation)).thenReturn(compilation);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
 
-            CompilationDto result = compilationService.findCompilationById(1L);
+        CompilationDto result = compilationService.updateCompilation(1L, request);
 
-            assertNotNull(result);
-            assertEquals(compilationDto.getId(), result.getId());
-        }
+        assertNotNull(result);
+        verify(compilationMapper).merge(compilation, request);
+        verify(compilationRepository).save(compilation);
+        verify(eventRepository, never()).findAllById(anySet());
+    }
 
-        @Test
-        public void shouldThrowNotFoundExceptionWhenFindingNonExistingCompilation() {
-            when(compilationRepository.findById(999L)).thenReturn(Optional.empty());
+    @Test
+    public void shouldUpdateOnlyPinned() {
+        UpdateCompilationRequest request = UpdateCompilationRequest.builder()
+                .pinned(false)
+                .build();
 
-            NotFoundException exception = assertThrows(NotFoundException.class,
-                    () -> compilationService.findCompilationById(999L));
+        when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
+        when(compilationRepository.save(compilation)).thenReturn(compilation);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
 
-            assertEquals("Подборка не найдена", exception.getMessage());
-        }
+        CompilationDto result = compilationService.updateCompilation(1L, request);
+
+        assertNotNull(result);
+        verify(compilationMapper).merge(compilation, request);
+        verify(compilationRepository).save(compilation);
+        verify(eventRepository, never()).findAllById(anySet());
+    }
+
+    @Test
+    public void shouldUpdateOnlyEvents() {
+        UpdateCompilationRequest request = UpdateCompilationRequest.builder()
+                .events(Set.of(1L))
+                .build();
+
+        when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
+        when(eventRepository.findAllById(Set.of(1L))).thenReturn(List.of(event1));
+        when(compilationRepository.save(compilation)).thenReturn(compilation);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+
+        CompilationDto result = compilationService.updateCompilation(1L, request);
+
+        assertNotNull(result);
+        verify(compilationMapper).merge(compilation, request);
+        verify(compilationRepository).save(compilation);
+        verify(eventRepository).findAllById(Set.of(1L));
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenUpdatingNonExistingCompilation() {
+        when(compilationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> compilationService.updateCompilation(999L, updateRequest));
+
+        assertEquals("Подборка не найдена", exception.getMessage());
+        verify(compilationRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldDeleteExistingCompilation() {
+        when(compilationRepository.existsById(1L)).thenReturn(true);
+
+        compilationService.deleteCompilation(1L);
+
+        verify(compilationRepository).deleteById(1L);
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenDeletingNonExistingCompilation() {
+        when(compilationRepository.existsById(999L)).thenReturn(false);
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> compilationService.deleteCompilation(999L));
+
+        assertEquals("Подборка не найдена", exception.getMessage());
+        verify(compilationRepository, never()).deleteById(any());
+    }
+
+    @Test
+    public void shouldFindAllCompilationsWithoutPinnedFilter() {
+        List<Compilation> compilations = List.of(compilation);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        when(compilationRepository.findAll(pageRequest)).thenReturn(new PageImpl<>(compilations));
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+
+        List<CompilationDto> result = compilationService.findCompilations(null, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(compilationRepository).findAll(pageRequest);
+        verify(compilationRepository, never()).findByPinned(anyBoolean(), any());
+    }
+
+    @Test
+    public void shouldFindPinnedCompilations() {
+        List<Compilation> compilations = List.of(compilation);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        when(compilationRepository.findByPinned(true, pageRequest)).thenReturn(compilations);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+
+        List<CompilationDto> result = compilationService.findCompilations(true, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(compilationRepository).findByPinned(true, pageRequest);
+        verify(compilationRepository, never()).findAll();
+    }
+
+    @Test
+    public void shouldFindNotPinnedCompilations() {
+        List<Compilation> compilations = List.of(compilation);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        when(compilationRepository.findByPinned(false, pageRequest)).thenReturn(compilations);
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+
+        List<CompilationDto> result = compilationService.findCompilations(false, 0, 10);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(compilationRepository).findByPinned(false, pageRequest);
+    }
+
+    @Test
+    public void shouldHandlePaginationCorrectly() {
+        PageRequest expectedPageRequest = PageRequest.of(1, 5);
+
+        when(compilationRepository.findAll(expectedPageRequest)).thenReturn(new PageImpl<>(List.of()));
+
+        compilationService.findCompilations(null, 5, 5);
+
+        verify(compilationRepository).findAll(PageRequest.of(1, 5));
+    }
+
+    @Test
+    public void shouldFindExistingCompilationById() {
+        when(compilationRepository.findById(1L)).thenReturn(Optional.of(compilation));
+        when(compilationMapper.toDto(compilation)).thenReturn(compilationDto);
+
+        CompilationDto result = compilationService.findCompilationById(1L);
+
+        assertNotNull(result);
+        assertEquals(compilationDto.getId(), result.getId());
+    }
+
+    @Test
+    public void shouldThrowNotFoundExceptionWhenFindingNonExistingCompilation() {
+        when(compilationRepository.findById(999L)).thenReturn(Optional.empty());
+
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> compilationService.findCompilationById(999L));
+
+        assertEquals("Подборка не найдена", exception.getMessage());
     }
 }

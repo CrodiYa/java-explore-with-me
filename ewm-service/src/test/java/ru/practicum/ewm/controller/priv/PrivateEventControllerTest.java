@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller.priv;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -14,10 +13,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.Formatter;
 import ru.practicum.ewm.exception.BadRequestException;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
+import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.participation.ParticipationRequestDto;
 import ru.practicum.ewm.model.participation.ParticipationStatus;
-import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.user.UserDto;
 import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.service.participation.ParticipationRequestService;
@@ -137,556 +136,536 @@ public class PrivateEventControllerTest {
                 .build();
     }
 
-    @Nested
-    class FindingEventsByUserId {
 
-        @Test
-        public void shouldReturnEventsList() throws Exception {
-            List<EventShortDto> events = List.of(eventShortDto);
-            when(eventService.findEventsByUserId(eq(userId), anyInt(), anyInt()))
-                    .thenReturn(events);
+    @Test
+    public void shouldReturnEventsList() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+        when(eventService.findEventsByUserId(eq(userId), anyInt(), anyInt()))
+                .thenReturn(events);
 
-            mockMvc.perform(get(baseUrl, userId)
-                            .param("from", "0")
-                            .param("size", "10"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].id", is(1)))
-                    .andExpect(jsonPath("$[0].title", is("Test Event")))
-                    .andExpect(jsonPath("$[0].annotation", is("Test Annotation")))
-                    .andExpect(jsonPath("$[0].paid", is(false)));
-        }
-
-        @Test
-        public void shouldReturnEmptyListWhenNoEvents() throws Exception {
-            when(eventService.findEventsByUserId(eq(userId), anyInt(), anyInt()))
-                    .thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl, userId))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(0)));
-        }
-
-        @Test
-        public void shouldUseDefaultPaginationWhenNotProvided() throws Exception {
-            when(eventService.findEventsByUserId(eq(userId), eq(0), eq(10)))
-                    .thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl, userId))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(get("/users/{userId}/events", 0))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenFromIsNegative() throws Exception {
-            mockMvc.perform(get(baseUrl, userId)
-                            .param("from", "-1"))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenSizeIsZero() throws Exception {
-            mockMvc.perform(get(baseUrl, userId)
-                            .param("size", "0"))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(baseUrl, userId)
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].title", is("Test Event")))
+                .andExpect(jsonPath("$[0].annotation", is("Test Annotation")))
+                .andExpect(jsonPath("$[0].paid", is(false)));
     }
 
-    @Nested
-    class FindingEventById {
+    @Test
+    public void shouldReturnEmptyListWhenNoEvents() throws Exception {
+        when(eventService.findEventsByUserId(eq(userId), anyInt(), anyInt()))
+                .thenReturn(List.of());
 
-        @Test
-        public void shouldReturnEvent() throws Exception {
-            when(eventService.findEventById(userId, eventId))
-                    .thenReturn(eventFullDto);
-
-            mockMvc.perform(get(baseUrl + "/{eventId}", userId, eventId))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Test Event")))
-                    .andExpect(jsonPath("$.state", is("PENDING")))
-                    .andExpect(jsonPath("$.location.lat", is(55.75)))
-                    .andExpect(jsonPath("$.location.lon", is(37.62)));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(get("/users/{userId}/events/{eventId}", 0, eventId))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
-            mockMvc.perform(get("/users/{userId}/events/{eventId}", userId, 0))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(baseUrl, userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
-    @Nested
-    class AddingEvent {
+    @Test
+    public void shouldUseDefaultPaginationWhenNotProvided() throws Exception {
+        when(eventService.findEventsByUserId(eq(userId), eq(0), eq(10)))
+                .thenReturn(List.of());
 
-        @Test
-        public void shouldCreateEventSuccessfully() throws Exception {
-            when(eventService.addEvent(userId, createRequest))
-                    .thenReturn(eventFullDto);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .characterEncoding(StandardCharsets.UTF_8)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isCreated())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Test Event")));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleBlank() throws Exception {
-            createRequest.setTitle("");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleTooShort() throws Exception {
-            createRequest.setTitle("ab");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleTooLong() throws Exception {
-            createRequest.setTitle("a".repeat(121));
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAnnotationBlank() throws Exception {
-            createRequest.setAnnotation("");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAnnotationTooShort() throws Exception {
-            createRequest.setAnnotation("short");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAnnotationTooLong() throws Exception {
-            createRequest.setAnnotation("a".repeat(2001));
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenDescriptionBlank() throws Exception {
-            createRequest.setDescription("");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenDescriptionTooShort() throws Exception {
-            createRequest.setDescription("short");
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenDescriptionTooLong() throws Exception {
-            createRequest.setDescription("a".repeat(7001));
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventDateNull() throws Exception {
-            createRequest.setEventDate(null);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventDateInvalid() throws Exception {
-            createRequest.setEventDate("invalid-date");
-            when(eventService.addEvent(userId, createRequest)).thenThrow(BadRequestException.class);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenCategoryNull() throws Exception {
-            createRequest.setCategory(null);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenLocationNull() throws Exception {
-            createRequest.setLocation(null);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenLatitudeInvalid() throws Exception {
-            createRequest.setLocation(new Location(-100.0, 37.62));
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenLongitudeInvalid() throws Exception {
-            createRequest.setLocation(new Location(55.75, -200.0));
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(post("/users/{userId}/events", 0)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldThrowWhenStateActionOnCreate() throws Exception {
-            createRequest.setStateAction(EventStateAction.PUBLISH_EVENT);
-
-            when(eventService.addEvent(userId, createRequest))
-                    .thenReturn(eventFullDto);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(createRequest)))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(baseUrl, userId))
+                .andExpect(status().isOk());
     }
 
-    @Nested
-    class PatchingEvent {
-
-        @Test
-        public void shouldPatchEventSuccessfully() throws Exception {
-            EventFullDto updatedDto = EventFullDto.builder()
-                    .id(eventId)
-                    .title("Updated Event")
-                    .annotation("Updated Annotation")
-                    .description("Updated Description")
-                    .state(EventState.PENDING)
-                    .build();
-
-            when(eventService.patchEvent(userId, eventId, updateRequest))
-                    .thenReturn(updatedDto);
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .characterEncoding(StandardCharsets.UTF_8)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Updated Event")))
-                    .andExpect(jsonPath("$.state", is("PENDING")));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleBlank() throws Exception {
-            updateRequest.setTitle("");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleTooShort() throws Exception {
-            updateRequest.setTitle("ab");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenTitleTooLong() throws Exception {
-            updateRequest.setTitle("a".repeat(121));
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAnnotationBlank() throws Exception {
-            updateRequest.setAnnotation("");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenAnnotationTooShort() throws Exception {
-            updateRequest.setAnnotation("short");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenDescriptionBlank() throws Exception {
-            updateRequest.setDescription("");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenDescriptionTooShort() throws Exception {
-            updateRequest.setDescription("short");
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventDateInvalid() throws Exception {
-            updateRequest.setEventDate("invalid-date");
-            when(eventService.patchEvent(userId, eventId, updateRequest)).thenThrow(BadRequestException.class);
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenCategoryNotPositive() throws Exception {
-            updateRequest.setCategory(-1L);
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenParticipantLimitNegative() throws Exception {
-            updateRequest.setParticipantLimit(-1);
-
-            mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(patch("/users/{userId}/events/{eventId}", 0, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
-            mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, 0)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositiveGet() throws Exception {
+        mockMvc.perform(get("/users/{userId}/events", 0))
+                .andExpect(status().isBadRequest());
     }
 
-    @Nested
-    class GettingRequests {
-
-        @Test
-        public void shouldReturnRequestsList() throws Exception {
-            List<ParticipationRequestDto> requests = List.of(requestDto);
-            when(prService.findByEventId(userId, eventId))
-                    .thenReturn(requests);
-
-            mockMvc.perform(get(baseUrl + "/{eventId}/requests", userId, eventId))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].id", is(1)))
-                    .andExpect(jsonPath("$[0].requester", is(1)))
-                    .andExpect(jsonPath("$[0].event", is(1)))
-                    .andExpect(jsonPath("$[0].status", is("PENDING")));
-        }
-
-        @Test
-        public void shouldReturnEmptyListWhenNoRequests() throws Exception {
-            when(prService.findByEventId(userId, eventId))
-                    .thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl + "/{eventId}/requests", userId, eventId))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(0)));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", 0, eventId))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
-            mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", userId, 0))
-                    .andExpect(status().isBadRequest());
-        }
+    @Test
+    public void shouldReturnBadRequestWhenFromIsNegative() throws Exception {
+        mockMvc.perform(get(baseUrl, userId)
+                        .param("from", "-1"))
+                .andExpect(status().isBadRequest());
     }
 
-    @Nested
-    class PatchingRequests {
+    @Test
+    public void shouldReturnBadRequestWhenSizeIsZero() throws Exception {
+        mockMvc.perform(get(baseUrl, userId)
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+    }
 
-        @Test
-        public void shouldConfirmRequestsSuccessfully() throws Exception {
-            when(prService.updateStatusParticipationRequest(userId, eventId, statusUpdateRequest))
-                    .thenReturn(updateResult);
+    @Test
+    public void shouldReturnEvent() throws Exception {
+        when(eventService.findEventById(userId, eventId))
+                .thenReturn(eventFullDto);
 
-            mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.confirmedRequests", hasSize(1)))
-                    .andExpect(jsonPath("$.confirmedRequests[0].id", is(1)))
-                    .andExpect(jsonPath("$.confirmedRequests[0].status", is("PENDING")))
-                    .andExpect(jsonPath("$.rejectedRequests", hasSize(0)));
-        }
+        mockMvc.perform(get(baseUrl + "/{eventId}", userId, eventId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Test Event")))
+                .andExpect(jsonPath("$.state", is("PENDING")))
+                .andExpect(jsonPath("$.location.lat", is(55.75)))
+                .andExpect(jsonPath("$.location.lon", is(37.62)));
+    }
 
-        @Test
-        public void shouldRejectRequestsSuccessfully() throws Exception {
-            statusUpdateRequest.setStatus(ParticipationStatus.REJECTED);
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositiveGetId() throws Exception {
+        mockMvc.perform(get("/users/{userId}/events/{eventId}", 0, eventId))
+                .andExpect(status().isBadRequest());
+    }
 
-            EventRequestStatusUpdateResult rejectResult = EventRequestStatusUpdateResult.builder()
-                    .confirmedRequests(List.of())
-                    .rejectedRequests(List.of(requestDto))
-                    .build();
+    @Test
+    public void shouldReturnBadRequestWhenEventIdNotPositiveGetId() throws Exception {
+        mockMvc.perform(get("/users/{userId}/events/{eventId}", userId, 0))
+                .andExpect(status().isBadRequest());
+    }
 
-            when(prService.updateStatusParticipationRequest(userId, eventId, statusUpdateRequest))
-                    .thenReturn(rejectResult);
 
-            mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.confirmedRequests", hasSize(0)))
-                    .andExpect(jsonPath("$.rejectedRequests", hasSize(1)))
-                    .andExpect(jsonPath("$.rejectedRequests[0].id", is(1)));
-        }
+    @Test
+    public void shouldCreateEventSuccessfully() throws Exception {
+        when(eventService.addEvent(userId, createRequest))
+                .thenReturn(eventFullDto);
 
-        @Test
-        public void shouldReturnOkWhenRequestIdsEmpty() throws Exception {
-            statusUpdateRequest.setRequestIds(List.of());
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Test Event")));
+    }
 
-            mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isOk());
-        }
+    @Test
+    public void shouldReturnBadRequestWhenTitleBlankPost() throws Exception {
+        createRequest.setTitle("");
 
-        @Test
-        public void shouldReturnBadRequestWhenStatusNull() throws Exception {
-            statusUpdateRequest.setStatus(null);
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
 
-            mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
+    @Test
+    public void shouldReturnBadRequestWhenTitleTooShortPost() throws Exception {
+        createRequest.setTitle("ab");
 
-        @Test
-        public void shouldReturnBadRequestWhenRequestBodyEmpty() throws Exception {
-            mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content("{}"))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
 
-        @Test
-        public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-            mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", 0, eventId)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
+    @Test
+    public void shouldReturnBadRequestWhenTitleTooLongPost() throws Exception {
+        createRequest.setTitle("a".repeat(121));
 
-        @Test
-        public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
-            mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", userId, 0)
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(statusUpdateRequest)))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAnnotationBlankPost() throws Exception {
+        createRequest.setAnnotation("");
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAnnotationTooShortPost() throws Exception {
+        createRequest.setAnnotation("short");
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAnnotationTooLong() throws Exception {
+        createRequest.setAnnotation("a".repeat(2001));
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDescriptionBlankPost() throws Exception {
+        createRequest.setDescription("");
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDescriptionTooShortPost() throws Exception {
+        createRequest.setDescription("short");
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDescriptionTooLong() throws Exception {
+        createRequest.setDescription("a".repeat(7001));
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventDateNull() throws Exception {
+        createRequest.setEventDate(null);
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventDateInvalidPost() throws Exception {
+        createRequest.setEventDate("invalid-date");
+        when(eventService.addEvent(userId, createRequest)).thenThrow(BadRequestException.class);
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenCategoryNull() throws Exception {
+        createRequest.setCategory(null);
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenLocationNull() throws Exception {
+        createRequest.setLocation(null);
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenLatitudeInvalid() throws Exception {
+        createRequest.setLocation(new Location(-100.0, 37.62));
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenLongitudeInvalid() throws Exception {
+        createRequest.setLocation(new Location(55.75, -200.0));
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositivePost() throws Exception {
+        mockMvc.perform(post("/users/{userId}/events", 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldThrowWhenStateActionOnCreate() throws Exception {
+        createRequest.setStateAction(EventStateAction.PUBLISH_EVENT);
+
+        when(eventService.addEvent(userId, createRequest))
+                .thenReturn(eventFullDto);
+
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldPatchEventSuccessfully() throws Exception {
+        EventFullDto updatedDto = EventFullDto.builder()
+                .id(eventId)
+                .title("Updated Event")
+                .annotation("Updated Annotation")
+                .description("Updated Description")
+                .state(EventState.PENDING)
+                .build();
+
+        when(eventService.patchEvent(userId, eventId, updateRequest))
+                .thenReturn(updatedDto);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Updated Event")))
+                .andExpect(jsonPath("$.state", is("PENDING")));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenTitleBlank() throws Exception {
+        updateRequest.setTitle("");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenTitleTooShort() throws Exception {
+        updateRequest.setTitle("ab");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenTitleTooLong() throws Exception {
+        updateRequest.setTitle("a".repeat(121));
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAnnotationBlank() throws Exception {
+        updateRequest.setAnnotation("");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAnnotationTooShort() throws Exception {
+        updateRequest.setAnnotation("short");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDescriptionBlank() throws Exception {
+        updateRequest.setDescription("");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenDescriptionTooShort() throws Exception {
+        updateRequest.setDescription("short");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventDateInvalid() throws Exception {
+        updateRequest.setEventDate("invalid-date");
+        when(eventService.patchEvent(userId, eventId, updateRequest)).thenThrow(BadRequestException.class);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenCategoryNotPositive() throws Exception {
+        updateRequest.setCategory(-1L);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenParticipantLimitNegative() throws Exception {
+        updateRequest.setParticipantLimit(-1);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositivePatch() throws Exception {
+        mockMvc.perform(patch("/users/{userId}/events/{eventId}", 0, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventIdNotPositivePatch() throws Exception {
+        mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    public void shouldReturnRequestsList() throws Exception {
+        List<ParticipationRequestDto> requests = List.of(requestDto);
+        when(prService.findByEventId(userId, eventId))
+                .thenReturn(requests);
+
+        mockMvc.perform(get(baseUrl + "/{eventId}/requests", userId, eventId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].requester", is(1)))
+                .andExpect(jsonPath("$[0].event", is(1)))
+                .andExpect(jsonPath("$[0].status", is("PENDING")));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoRequests() throws Exception {
+        when(prService.findByEventId(userId, eventId))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get(baseUrl + "/{eventId}/requests", userId, eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositiveGetRequests() throws Exception {
+        mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", 0, eventId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventIdNotPositiveGetRequests() throws Exception {
+        mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", userId, 0))
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    public void shouldConfirmRequestsSuccessfully() throws Exception {
+        when(prService.updateStatusParticipationRequest(userId, eventId, statusUpdateRequest))
+                .thenReturn(updateResult);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.confirmedRequests", hasSize(1)))
+                .andExpect(jsonPath("$.confirmedRequests[0].id", is(1)))
+                .andExpect(jsonPath("$.confirmedRequests[0].status", is("PENDING")))
+                .andExpect(jsonPath("$.rejectedRequests", hasSize(0)));
+    }
+
+    @Test
+    public void shouldRejectRequestsSuccessfully() throws Exception {
+        statusUpdateRequest.setStatus(ParticipationStatus.REJECTED);
+
+        EventRequestStatusUpdateResult rejectResult = EventRequestStatusUpdateResult.builder()
+                .confirmedRequests(List.of())
+                .rejectedRequests(List.of(requestDto))
+                .build();
+
+        when(prService.updateStatusParticipationRequest(userId, eventId, statusUpdateRequest))
+                .thenReturn(rejectResult);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.confirmedRequests", hasSize(0)))
+                .andExpect(jsonPath("$.rejectedRequests", hasSize(1)))
+                .andExpect(jsonPath("$.rejectedRequests[0].id", is(1)));
+    }
+
+    @Test
+    public void shouldReturnOkWhenRequestIdsEmpty() throws Exception {
+        statusUpdateRequest.setRequestIds(List.of());
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenStatusNull() throws Exception {
+        statusUpdateRequest.setStatus(null);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenRequestBodyEmpty() throws Exception {
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
+        mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", 0, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
+        mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", userId, 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isBadRequest());
     }
 }

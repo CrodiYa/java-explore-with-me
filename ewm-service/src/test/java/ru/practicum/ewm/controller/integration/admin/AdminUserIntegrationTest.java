@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller.integration.admin;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -41,98 +40,87 @@ public class AdminUserIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Nested
-    class GetUser {
+    @Test
+    public void shouldGetAllNoList() throws Exception {
+        User user1 = userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail()));
+        User user2 = userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail()));
 
-        @Test
-        public void shouldGetAllNoList() throws Exception {
-            User user1 = userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail()));
-            User user2 = userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail()));
-
-            mockMvc.perform(get("/admin/users"))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(2)))
-                    .andExpect(jsonPath("$[*].id", containsInAnyOrder(user1.getId().intValue(),
-                            user2.getId().intValue())))
-                    .andExpect(jsonPath("$[*].name", containsInAnyOrder(user1.getName(), user2.getName())))
-                    .andExpect(jsonPath("$[*].email", containsInAnyOrder(user1.getEmail(), user2.getEmail())));
-        }
-
-        @Test
-        public void shouldGetAllWithList() throws Exception {
-            User user1 = userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail()));
-            User user2 = userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail()));
-            userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail()));
-
-            mockMvc.perform(get("/admin/users?ids=" + user1.getId() + "&ids=" + user2.getId()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(2)))
-                    .andExpect(jsonPath("$[*].id", containsInAnyOrder(user1.getId().intValue(),
-                            user2.getId().intValue())))
-                    .andExpect(jsonPath("$[*].name", containsInAnyOrder(user1.getName(), user2.getName())))
-                    .andExpect(jsonPath("$[*].email", containsInAnyOrder(user1.getEmail(), user2.getEmail())));
-        }
+        mockMvc.perform(get("/admin/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].id", containsInAnyOrder(user1.getId().intValue(),
+                        user2.getId().intValue())))
+                .andExpect(jsonPath("$[*].name", containsInAnyOrder(user1.getName(), user2.getName())))
+                .andExpect(jsonPath("$[*].email", containsInAnyOrder(user1.getEmail(), user2.getEmail())));
     }
 
-    @Nested
-    class PostUser {
-        @Test
-        public void shouldCreate() throws Exception {
-            NewUserRequest request = new NewUserRequest(RandomHelper.getRandomString(), RandomHelper.getRandomEmail());
+    @Test
+    public void shouldGetAllWithList() throws Exception {
+        User user1 = userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail()));
+        User user2 = userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail()));
+        userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail()));
 
-            mockMvc.perform(buildPostRequest(request))
-                    .andExpect(status().isCreated())
-                    .andExpect(jsonPath("$.name").value(request.getName()))
-                    .andExpect(jsonPath("$.email").value(request.getEmail()));
-        }
-
-
-        @Test
-        public void shouldReturnConflictWhenConflict() throws Exception {
-            String email = RandomHelper.getRandomEmail();
-
-            userRepository.save(new User(null, RandomHelper.getRandomString(), email));
-
-            NewUserRequest request = new NewUserRequest(RandomHelper.getRandomString(), email);
-
-            mockMvc.perform(buildPostRequest(request))
-                    .andExpect(status().isConflict());
-        }
-
-        private RequestBuilder buildPostRequest(NewUserRequest request) throws JsonProcessingException {
-            return post("/admin/users")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(request));
-        }
+        mockMvc.perform(get("/admin/users?ids=" + user1.getId() + "&ids=" + user2.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[*].id", containsInAnyOrder(user1.getId().intValue(),
+                        user2.getId().intValue())))
+                .andExpect(jsonPath("$[*].name", containsInAnyOrder(user1.getName(), user2.getName())))
+                .andExpect(jsonPath("$[*].email", containsInAnyOrder(user1.getEmail(), user2.getEmail())));
     }
 
-    @Nested
-    class DeleteUser {
+    @Test
+    public void shouldCreate() throws Exception {
+        NewUserRequest request = new NewUserRequest(RandomHelper.getRandomString(), RandomHelper.getRandomEmail());
 
-        @Test
-        public void shouldDelete() throws Exception {
-            Long id = userRepository.save(new User(null, RandomHelper.getRandomString(),
-                    RandomHelper.getRandomEmail())).getId();
+        mockMvc.perform(buildPostRequest(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value(request.getName()))
+                .andExpect(jsonPath("$.email").value(request.getEmail()));
+    }
 
-            mockMvc.perform(buildDeleteRequest(id + ""))
-                    .andExpect(status().isNoContent());
 
-            assertTrue(userRepository.findById(id).isEmpty());
-        }
+    @Test
+    public void shouldReturnConflictWhenConflict() throws Exception {
+        String email = RandomHelper.getRandomEmail();
 
-        @Test
-        public void shouldReturnNotFoundWhenNotFound() throws Exception {
-            mockMvc.perform(buildDeleteRequest("10000"))
-                    .andExpect(status().isNotFound());
-        }
+        userRepository.save(new User(null, RandomHelper.getRandomString(), email));
 
-        private RequestBuilder buildDeleteRequest(String id) {
-            return delete("/admin/users/" + id);
-        }
+        NewUserRequest request = new NewUserRequest(RandomHelper.getRandomString(), email);
+
+        mockMvc.perform(buildPostRequest(request))
+                .andExpect(status().isConflict());
+    }
+
+    private RequestBuilder buildPostRequest(NewUserRequest request) throws JsonProcessingException {
+        return post("/admin/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request));
+    }
+
+    @Test
+    public void shouldDelete() throws Exception {
+        Long id = userRepository.save(new User(null, RandomHelper.getRandomString(),
+                RandomHelper.getRandomEmail())).getId();
+
+        mockMvc.perform(buildDeleteRequest(id + ""))
+                .andExpect(status().isNoContent());
+
+        assertTrue(userRepository.findById(id).isEmpty());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenNotFound() throws Exception {
+        mockMvc.perform(buildDeleteRequest("10000"))
+                .andExpect(status().isNotFound());
+    }
+
+    private RequestBuilder buildDeleteRequest(String id) {
+        return delete("/admin/users/" + id);
     }
 }

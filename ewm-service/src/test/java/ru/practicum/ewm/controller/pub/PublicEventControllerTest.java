@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller.pub;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -80,74 +79,66 @@ public class PublicEventControllerTest {
                 .build();
     }
 
-    @Nested
-    class FindingPublicEvents {
+    @Test
+    public void shouldReturnEventsList() throws Exception {
+        List<EventShortDto> events = List.of(eventShortDto);
+        when(eventService.findPublicEvents(anyString(), anyList(), anyBoolean(), any(), any(), anyBoolean(),
+                anyString(), anyInt(), anyInt(), anyString()))
+                .thenReturn(events);
 
-        @Test
-        public void shouldReturnEventsList() throws Exception {
-            List<EventShortDto> events = List.of(eventShortDto);
-            when(eventService.findPublicEvents(anyString(), anyList(), anyBoolean(), any(), any(), anyBoolean(),
-                    anyString(), anyInt(), anyInt(), anyString()))
-                    .thenReturn(events);
-
-            mockMvc.perform(get(baseUrl)
-                            .param("text", "concert")
-                            .param("categories", "1", "2")
-                            .param("paid", "true")
-                            .param("rangeStart", "2023-01-01T00:00:00Z")
-                            .param("rangeEnd", "2024-01-01T00:00:00Z")
-                            .param("onlyAvailable", "true")
-                            .param("sort", "EVENT_DATE")
-                            .param("from", "0")
-                            .param("size", "10"))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].id", is(1)))
-                    .andExpect(jsonPath("$[0].title", is("Test Event")));
-        }
-
-        @Test
-        public void shouldUseDefaultPaginationWhenNotProvided() throws Exception {
-            when(eventService.findPublicEvents(isNull(), isNull(), isNull(), isNull(), isNull(),
-                    eq(false), isNull(), eq(0), eq(10), anyString()))
-                    .thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        public void shouldAcceptMinimalParameters() throws Exception {
-            when(eventService.findPublicEvents(isNull(), isNull(), isNull(), isNull(), isNull(),
-                    eq(false), isNull(), eq(0), eq(10), anyString()))
-                    .thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl))
-                    .andExpect(status().isOk());
-        }
+        mockMvc.perform(get(baseUrl)
+                        .param("text", "concert")
+                        .param("categories", "1", "2")
+                        .param("paid", "true")
+                        .param("rangeStart", "2023-01-01T00:00:00Z")
+                        .param("rangeEnd", "2024-01-01T00:00:00Z")
+                        .param("onlyAvailable", "true")
+                        .param("sort", "EVENT_DATE")
+                        .param("from", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].title", is("Test Event")));
     }
 
-    @Nested
-    class FindingPublicEvent {
+    @Test
+    public void shouldUseDefaultPaginationWhenNotProvided() throws Exception {
+        when(eventService.findPublicEvents(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString()))
+                .thenReturn(List.of());
 
-        @Test
-        public void shouldReturnEvent() throws Exception {
-            when(eventService.findPublicEvent(eq(eventId), anyString()))
-                    .thenReturn(eventFullDto);
+        mockMvc.perform(get(baseUrl))
+                .andExpect(status().isOk());
+    }
 
-            mockMvc.perform(get(baseUrl + "/{id}", eventId))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.title", is("Test Event")))
-                    .andExpect(jsonPath("$.state", is("PUBLISHED")));
-        }
+    @Test
+    public void shouldAcceptMinimalParameters() throws Exception {
+        when(eventService.findPublicEvents(isNull(), isNull(), isNull(), isNull(), isNull(),
+                eq(false), isNull(), eq(0), eq(10), anyString()))
+                .thenReturn(List.of());
 
-        @Test
-        public void shouldReturnBadRequestWhenIdNotPositive() throws Exception {
-            mockMvc.perform(get(baseUrl + "/{id}", 0))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(baseUrl))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldReturnEvent() throws Exception {
+        when(eventService.findPublicEvent(eq(eventId), anyString()))
+                .thenReturn(eventFullDto);
+
+        mockMvc.perform(get(baseUrl + "/{id}", eventId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.title", is("Test Event")))
+                .andExpect(jsonPath("$.state", is("PUBLISHED")));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenIdNotPositive() throws Exception {
+        mockMvc.perform(get(baseUrl + "/{id}", 0))
+                .andExpect(status().isBadRequest());
     }
 }

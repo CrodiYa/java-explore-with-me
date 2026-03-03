@@ -2,7 +2,6 @@ package ru.practicum.ewm.controller.priv;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -58,91 +57,79 @@ public class PrivateParticipationRequestControllerTest {
                 .build();
     }
 
-    @Nested
-    class FindingByRequesterId {
+    @Test
+    public void shouldReturnRequestsList() throws Exception {
+        List<ParticipationRequestDto> requests = List.of(requestDto);
+        when(service.findByRequesterId(userId)).thenReturn(requests);
 
-        @Test
-        public void shouldReturnRequestsList() throws Exception {
-            List<ParticipationRequestDto> requests = List.of(requestDto);
-            when(service.findByRequesterId(userId)).thenReturn(requests);
-
-            mockMvc.perform(get(baseUrl, userId))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$", hasSize(1)))
-                    .andExpect(jsonPath("$[0].id", is(1)))
-                    .andExpect(jsonPath("$[0].status", is("PENDING")));
-        }
-
-        @Test
-        public void shouldReturnEmptyListWhenNoRequests() throws Exception {
-            when(service.findByRequesterId(userId)).thenReturn(List.of());
-
-            mockMvc.perform(get(baseUrl, userId))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$", hasSize(0)));
-        }
+        mockMvc.perform(get(baseUrl, userId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(1)))
+                .andExpect(jsonPath("$[0].status", is("PENDING")));
     }
 
-    @Nested
-    class AddingParticipationRequest {
+    @Test
+    public void shouldReturnEmptyListWhenNoRequests() throws Exception {
+        when(service.findByRequesterId(userId)).thenReturn(List.of());
 
-        @Test
-        public void shouldCreateRequestSuccessfully() throws Exception {
-            when(service.addParticipationRequest(eq(userId), eq(eventId)))
-                    .thenReturn(requestDto);
-
-            mockMvc.perform(post(baseUrl, userId)
-                            .param("eventId", eventId.toString())
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isCreated())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.status", is("PENDING")));
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventIdNotProvided() throws Exception {
-            mockMvc.perform(post(baseUrl, userId)
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isBadRequest());
-        }
-
-        @Test
-        public void shouldReturnBadRequestWhenEventIdInvalid() throws Exception {
-            mockMvc.perform(post(baseUrl, userId)
-                            .param("eventId", "invalid")
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isBadRequest());
-        }
+        mockMvc.perform(get(baseUrl, userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
-    @Nested
-    class CancelingParticipationRequest {
+    @Test
+    public void shouldCreateRequestSuccessfully() throws Exception {
+        when(service.addParticipationRequest(eq(userId), eq(eventId)))
+                .thenReturn(requestDto);
 
-        @Test
-        public void shouldCancelRequestSuccessfully() throws Exception {
-            ParticipationRequestDto canceledDto = ParticipationRequestDto.builder()
-                    .id(requestId)
-                    .requester(userId)
-                    .event(eventId)
-                    .status(ParticipationStatus.CANCELED)
-                    .build();
+        mockMvc.perform(post(baseUrl, userId)
+                        .param("eventId", eventId.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.status", is("PENDING")));
+    }
 
-            when(service.cancelParticipationRequest(userId, requestId))
-                    .thenReturn(canceledDto);
+    @Test
+    public void shouldReturnBadRequestWhenEventIdNotProvided() throws Exception {
+        mockMvc.perform(post(baseUrl, userId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
 
-            mockMvc.perform(patch(baseUrl + "/{requestId}/cancel", userId, requestId))
-                    .andExpect(status().isOk())
-                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(jsonPath("$.id", is(1)))
-                    .andExpect(jsonPath("$.status", is("CANCELED")));
-        }
+    @Test
+    public void shouldReturnBadRequestWhenEventIdInvalid() throws Exception {
+        mockMvc.perform(post(baseUrl, userId)
+                        .param("eventId", "invalid")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
 
-        @Test
-        public void shouldReturnBadRequestWhenRequestIdNotPositive() throws Exception {
-            mockMvc.perform(patch(baseUrl + "/{requestId}/cancel", userId, 0))
-                    .andExpect(status().isBadRequest());
-        }
+    @Test
+    public void shouldCancelRequestSuccessfully() throws Exception {
+        ParticipationRequestDto canceledDto = ParticipationRequestDto.builder()
+                .id(requestId)
+                .requester(userId)
+                .event(eventId)
+                .status(ParticipationStatus.CANCELED)
+                .build();
+
+        when(service.cancelParticipationRequest(userId, requestId))
+                .thenReturn(canceledDto);
+
+        mockMvc.perform(patch(baseUrl + "/{requestId}/cancel", userId, requestId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(1)))
+                .andExpect(jsonPath("$.status", is("CANCELED")));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenRequestIdNotPositive() throws Exception {
+        mockMvc.perform(patch(baseUrl + "/{requestId}/cancel", userId, 0))
+                .andExpect(status().isBadRequest());
     }
 }
