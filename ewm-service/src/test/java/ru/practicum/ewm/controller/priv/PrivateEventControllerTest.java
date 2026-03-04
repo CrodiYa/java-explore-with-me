@@ -12,8 +12,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.Formatter;
 import ru.practicum.ewm.exception.BadRequestException;
+import ru.practicum.ewm.exception.ForbiddenException;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.model.category.CategoryDto;
+import ru.practicum.ewm.model.comment.CommentDto;
+import ru.practicum.ewm.model.comment.CommentDtoRequest;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.participation.ParticipationRequestDto;
 import ru.practicum.ewm.model.participation.ParticipationStatus;
@@ -31,7 +35,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -67,6 +71,10 @@ public class PrivateEventControllerTest {
     private final Long eventId = 1L;
     private final String baseUrl = "/users/{userId}/events";
 
+    private CommentDto commentDto;
+    private CommentDtoRequest commentDtoRequest;
+    private Long commentId = 1L;
+
     @BeforeEach
     public void setUp() {
         String date = Formatter.format(Instant.now().plus(3, ChronoUnit.HOURS));
@@ -98,6 +106,17 @@ public class PrivateEventControllerTest {
                 .views(0L)
                 .state(EventState.PENDING)
                 .build();
+
+        commentDto = CommentDto.builder()
+                .id(commentId)
+                .eventId(eventId).authorName("author")
+                .text("Test comment")
+                .created("2023-01-01 12:00:00")
+                .updated("2023-01-01 12:00:00")
+                .build();
+
+        commentDtoRequest = new CommentDtoRequest();
+        commentDtoRequest.setText("Test comment");
 
         createRequest = EventDtoRequest.builder()
                 .title("New Event")
@@ -180,7 +199,7 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositiveGet() throws Exception {
-        mockMvc.perform(get("/users/{userId}/events", 0))
+        mockMvc.perform(get(baseUrl + "", 0))
                 .andExpect(status().isBadRequest());
     }
 
@@ -215,13 +234,13 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositiveGetId() throws Exception {
-        mockMvc.perform(get("/users/{userId}/events/{eventId}", 0, eventId))
+        mockMvc.perform(get(baseUrl + "/{eventId}", 0, eventId))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     public void shouldReturnBadRequestWhenEventIdNotPositiveGetId() throws Exception {
-        mockMvc.perform(get("/users/{userId}/events/{eventId}", userId, 0))
+        mockMvc.perform(get(baseUrl + "/{eventId}", userId, 0))
                 .andExpect(status().isBadRequest());
     }
 
@@ -394,7 +413,7 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositivePost() throws Exception {
-        mockMvc.perform(post("/users/{userId}/events", 0)
+        mockMvc.perform(post(baseUrl + "", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
                 .andExpect(status().isBadRequest());
@@ -539,7 +558,7 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositivePatch() throws Exception {
-        mockMvc.perform(patch("/users/{userId}/events/{eventId}", 0, eventId)
+        mockMvc.perform(patch(baseUrl + "/{eventId}", 0, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isBadRequest());
@@ -547,7 +566,7 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenEventIdNotPositivePatch() throws Exception {
-        mockMvc.perform(patch("/users/{userId}/events/{eventId}", userId, 0)
+        mockMvc.perform(patch(baseUrl + "/{eventId}", userId, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isBadRequest());
@@ -582,13 +601,13 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositiveGetRequests() throws Exception {
-        mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", 0, eventId))
+        mockMvc.perform(get(baseUrl + "/{eventId}/requests", 0, eventId))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     public void shouldReturnBadRequestWhenEventIdNotPositiveGetRequests() throws Exception {
-        mockMvc.perform(get("/users/{userId}/events/{eventId}/requests", userId, 0))
+        mockMvc.perform(get(baseUrl + "/{eventId}/requests", userId, 0))
                 .andExpect(status().isBadRequest());
     }
 
@@ -659,7 +678,7 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenUserIdNotPositive() throws Exception {
-        mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", 0, eventId)
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", 0, eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusUpdateRequest)))
                 .andExpect(status().isBadRequest());
@@ -667,9 +686,250 @@ public class PrivateEventControllerTest {
 
     @Test
     public void shouldReturnBadRequestWhenEventIdNotPositive() throws Exception {
-        mockMvc.perform(patch("/users/{userId}/events/{eventId}/requests", userId, 0)
+        mockMvc.perform(patch(baseUrl + "/{eventId}/requests", userId, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(statusUpdateRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldAddComment() throws Exception {
+        when(commentService.addComment(eq(userId), eq(eventId), any(CommentDtoRequest.class)))
+                .thenReturn(commentDto);
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.id").value(commentId))
+                .andExpect(jsonPath("$.eventId").value(eventId))
+                .andExpect(jsonPath("$.authorName").value("author"))
+                .andExpect(jsonPath("$.text").value("Test comment"));
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAddingCommentWithBlankText() throws Exception {
+        commentDtoRequest.setText("");
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAddingCommentWithTextTooLong() throws Exception {
+        String longText = "a".repeat(1001);
+        commentDtoRequest.setText(longText);
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenAddingCommentToUnpublishedEvent() throws Exception {
+        when(commentService.addComment(eq(userId), eq(eventId), any(CommentDtoRequest.class)))
+                .thenThrow(new BadRequestException("Событие еще не опубликовано"));
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenAddingCommentToNonExistentEvent() throws Exception {
+        when(commentService.addComment(eq(userId), eq(eventId), any(CommentDtoRequest.class)))
+                .thenThrow(new NotFoundException("Событие с id " + eventId + " не найдено"));
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenAddingCommentByNonExistentUser() throws Exception {
+        when(commentService.addComment(eq(userId), eq(eventId), any(CommentDtoRequest.class)))
+                .thenThrow(new NotFoundException("Пользователь с id " + userId + " не найден"));
+
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", userId, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdIsNegativeForAdd() throws Exception {
+        mockMvc.perform(post(baseUrl + "/{eventId}/comment", -1, eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldPatchComment() throws Exception {
+        CommentDto updatedDto = new CommentDto();
+        updatedDto.setId(commentId);
+        updatedDto.setText("Updated text");
+
+        CommentDtoRequest updateRequest = new CommentDtoRequest();
+        updateRequest.setText("Updated text");
+
+        when(commentService.patchComment(eq(userId), eq(eventId), eq(commentId), any(CommentDtoRequest.class)))
+                .thenReturn(updatedDto);
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.id").value(commentId))
+                .andExpect(jsonPath("$.text").value("Updated text"));
+    }
+
+    @Test
+    public void shouldReturnForbiddenWhenPatchingCommentByNonAuthor() throws Exception {
+        when(commentService.patchComment(eq(userId), eq(eventId), eq(commentId), any(CommentDtoRequest.class)))
+                .thenThrow(new ForbiddenException("Только автор может менять комментарии"));
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenPatchingNonExistentComment() throws Exception {
+        when(commentService.patchComment(eq(userId), eq(eventId), eq(999L), any(CommentDtoRequest.class)))
+                .thenThrow(new NotFoundException("Комментарий с id 999 не найден"));
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, 999)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenPatchingWithBlankText() throws Exception {
+        commentDtoRequest.setText("");
+
+        mockMvc.perform(patch(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(commentDtoRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldDeleteComment() throws Exception {
+        doNothing().when(commentService).deleteComment(userId, eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void shouldReturnForbiddenWhenDeletingCommentByNonAuthor() throws Exception {
+        doThrow(new ForbiddenException("Только автор может удалять комментарии"))
+                .when(commentService).deleteComment(userId, eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenDeletingNonExistentComment() throws Exception {
+        doThrow(new NotFoundException("Комментарий с id " + commentId + " не найден"))
+                .when(commentService).deleteComment(userId, eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", userId, eventId, commentId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdIsNegativeForDelete() throws Exception {
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", -1, eventId, commentId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldGetUserCommentsWithDefaultParams() throws Exception {
+        List<CommentDto> comments = List.of(commentDto);
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenReturn(comments);
+
+        mockMvc.perform(get(baseUrl + "/comment", userId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$[0].id").value(commentId))
+                .andExpect(jsonPath("$[0].eventId").value(eventId))
+                .andExpect(jsonPath("$[0].authorName").value("author"))
+                .andExpect(jsonPath("$[0].text").value("Test comment"));
+    }
+
+    @Test
+    public void shouldGetUserCommentsWithCustomParams() throws Exception {
+        List<CommentDto> comments = List.of(commentDto);
+        when(commentService.getUserComments(eq(userId), eq("ASC"), eq(5), eq(20)))
+                .thenReturn(comments);
+
+        mockMvc.perform(get(baseUrl + "/comment", userId)
+                        .param("sort", "ASC")
+                        .param("from", "5")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$[0].id").value(commentId));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoUserComments() throws Exception {
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get(baseUrl + "/comment", userId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenUserDoesNotExistForGetComments() throws Exception {
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenThrow(new NotFoundException("Пользователь с id " + userId + " не найден"));
+
+        mockMvc.perform(get(baseUrl + "/comment", userId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdIsNegativeForGetComments() throws Exception {
+        mockMvc.perform(get(baseUrl + "/comment", -1))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenFromIsNegativeForGetComments() throws Exception {
+        mockMvc.perform(get(baseUrl + "/comment", userId)
+                        .param("from", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenSizeIsZeroForGetComments() throws Exception {
+        mockMvc.perform(get(baseUrl + "/comment", userId)
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenSizeIsNegativeForGetComments() throws Exception {
+        mockMvc.perform(get(baseUrl + "/comment", userId)
+                        .param("size", "-10"))
                 .andExpect(status().isBadRequest());
     }
 }

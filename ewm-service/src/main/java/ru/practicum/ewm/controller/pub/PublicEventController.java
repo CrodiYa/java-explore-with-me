@@ -23,22 +23,6 @@ public class PublicEventController {
     private final EventService eventService;
     private final CommentService commentService;
 
-    @GetMapping("/{eventId}/comment")
-    public List<CommentDto> getEventComments(@PathVariable @Positive Long eventId,
-                                             @RequestParam(defaultValue = "DESC") String sort,
-                                             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                             @RequestParam(defaultValue = "10") @Positive Integer size) {
-
-        return commentService.getEventComments(eventId, sort, from, size);
-    }
-
-    @GetMapping("/{eventId}/comment/{commentId}")
-    public CommentDto getCommentById(@PathVariable @Positive Long eventId,
-                                     @PathVariable @Positive Long commentId) {
-
-        return commentService.getCommentById(eventId, commentId);
-    }
-
     @GetMapping
     public List<EventShortDto> findPublicEvents(@RequestParam(required = false) String text,
                                                 @RequestParam(required = false) List<Long> categories,
@@ -58,5 +42,21 @@ public class PublicEventController {
     public EventFullDto findPublicEvent(@PathVariable(name = "id") @Positive Long eventId,
                                         HttpServletRequest request) {
         return eventService.findPublicEvent(eventId, request.getRemoteAddr());
+    }
+
+    @GetMapping("/{eventId}/comment")
+    public List<CommentDto> getEventComments(@PathVariable @Positive Long eventId,
+                                             @RequestParam(defaultValue = "DESC") String sort,
+                                             @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                             @RequestParam(defaultValue = "10") @Positive Integer size) {
+
+        return commentService.getEventComments(eventId, sort, from, size);
+    }
+
+    @GetMapping("/{eventId}/comment/{commentId}")
+    public CommentDto getCommentById(@PathVariable @Positive Long eventId,
+                                     @PathVariable @Positive Long commentId) {
+
+        return commentService.getCommentById(eventId, commentId);
     }
 }
