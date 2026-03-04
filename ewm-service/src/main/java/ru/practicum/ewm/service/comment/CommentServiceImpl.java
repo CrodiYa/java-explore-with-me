@@ -18,6 +18,7 @@ import ru.practicum.ewm.repository.CommentRepository;
 import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.service.user.UserService;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -52,11 +53,14 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = findEntityById(commentId);
 
+        validateCommentBelongsToEvent(comment, eventId);
+
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new ForbiddenException("Только автор может менять комментарии");
         }
 
         comment.setText(request.getText());
+        comment.setUpdated(Instant.now());
 
         return commentMapper.toDto(commentRepository.save(comment));
     }
@@ -68,6 +72,8 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = findEntityById(commentId);
 
+        validateCommentBelongsToEvent(comment, eventId);
+
         if (!comment.getAuthor().getId().equals(userId)) {
             throw new ForbiddenException("Только автор может удалять комментарии");
         }
@@ -78,9 +84,10 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void deleteCommentAdmin(Long eventId, Long commentId) {
         eventService.throwIfEventNotFound(eventId);
-        if (!commentRepository.existsById(commentId)) {
-            throw new NotFoundException("Комментарий с id " + commentId + " не найден");
-        }
+
+        Comment comment = findEntityById(commentId);
+        validateCommentBelongsToEvent(comment, eventId);
+
         commentRepository.deleteById(commentId);
     }
 
@@ -112,7 +119,10 @@ public class CommentServiceImpl implements CommentService {
         Event event = eventService.findEntityById(eventId);
         throwIfEventNotPublished(event);
 
-        return commentMapper.toDto(findEntityById(commentId));
+        Comment comment = findEntityById(commentId);
+        validateCommentBelongsToEvent(comment, eventId);
+
+        return commentMapper.toDto(comment);
     }
 
     private Comment findEntityById(Long commentId) {
@@ -122,11 +132,17 @@ public class CommentServiceImpl implements CommentService {
 
     private Sort getSorting(String sort) {
         Sort sorting = Sort.by("created").descending();
-        if (sort.equals("ASC")) {
+        if (sort.equalsIgnoreCase("ASC")) {
             sorting = sorting.ascending();
         }
 
         return sorting;
+    }
+
+    private void validateCommentBelongsToEvent(Comment comment, Long eventId) {
+        if (!comment.getEventId().equals(eventId)) {
+            throw new NotFoundException("Комментарий с id: " + comment.getId() + "не найден для события c id: " + eventId);
+        }
     }
 
     private void throwIfEventNotPublished(Event event) {

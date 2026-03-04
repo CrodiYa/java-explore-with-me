@@ -35,6 +35,5 @@ public class Comment {
     private Instant created;
 
     @Column(name = "updated")
-    @UpdateTimestamp
     private Instant updated;
 }
