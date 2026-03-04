@@ -16,6 +16,7 @@ import ru.practicum.ewm.exception.GlobalExceptionHandler;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.model.user.NewUserRequest;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.util.List;
@@ -39,6 +40,9 @@ public class AdminUserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private CommentService commentService;
 
     @Test
     public void shouldGetAllNoList() throws Exception {

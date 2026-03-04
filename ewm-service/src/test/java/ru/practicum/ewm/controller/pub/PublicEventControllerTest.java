@@ -18,6 +18,7 @@ import ru.practicum.ewm.model.event.EventShortDto;
 import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.event.Location;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.time.Instant;
@@ -44,6 +45,9 @@ public class PublicEventControllerTest {
 
     @MockBean
     private EventService eventService;
+
+    @MockBean
+    private CommentService commentService;
 
     private EventShortDto eventShortDto;
     private EventFullDto eventFullDto;

@@ -15,6 +15,7 @@ import ru.practicum.ewm.exception.GlobalExceptionHandler;
 import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.nio.charset.StandardCharsets;
@@ -43,6 +44,9 @@ public class AdminEventControllerTest {
 
     @MockBean
     private EventService eventService;
+
+    @MockBean
+    private CommentService commentService;
 
     private EventFullDto eventFullDto;
     private EventDtoRequest updateRequest;

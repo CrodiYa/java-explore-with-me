@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -18,6 +19,7 @@ import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.participation.ParticipationRequestDto;
 import ru.practicum.ewm.model.participation.ParticipationStatus;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.service.participation.ParticipationRequestService;
 
@@ -47,6 +49,9 @@ public class PrivateEventControllerTest {
 
     @MockBean
     private EventService eventService;
+
+    @MockBean
+    private CommentService commentService;
 
     @MockBean
     private ParticipationRequestService prService;
