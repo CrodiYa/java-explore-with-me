@@ -177,7 +177,7 @@ public class CommentServiceImplTest {
     public void shouldDeleteCommentAdmin() {
         doNothing().when(eventService).throwIfEventNotFound(eventId);
 
-        when(commentRepository.existsById(commentId)).thenReturn(true);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
         doNothing().when(commentRepository).deleteById(commentId);
 
         commentService.deleteCommentAdmin(eventId, commentId);
@@ -189,7 +189,7 @@ public class CommentServiceImplTest {
     public void shouldThrowNotFoundWhenDeletingNonExistentCommentAdmin() {
         doNothing().when(eventService).throwIfEventNotFound(eventId);
 
-        when(commentRepository.existsById(commentId)).thenReturn(false);
+        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class,
                 () -> commentService.deleteCommentAdmin(eventId, commentId));

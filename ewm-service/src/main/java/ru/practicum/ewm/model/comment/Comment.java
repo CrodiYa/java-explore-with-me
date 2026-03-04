@@ -3,7 +3,6 @@ package ru.practicum.ewm.model.comment;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import ru.practicum.ewm.model.user.User;
 
 import java.time.Instant;
