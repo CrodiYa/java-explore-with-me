@@ -14,12 +14,15 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
 import ru.practicum.ewm.exception.NotFoundException;
+import ru.practicum.ewm.model.comment.CommentDto;
 import ru.practicum.ewm.model.user.NewUserRequest;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -39,6 +42,13 @@ public class AdminUserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private CommentService commentService;
+
+    private Long userId = 1L;
+    private Long eventId = 1L;
+    private Long commentId = 1L;
 
     @Test
     public void shouldGetAllNoList() throws Exception {
@@ -196,5 +206,97 @@ public class AdminUserControllerTest {
         return post("/admin/users")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request));
+    }
+
+    @Test
+    public void shouldGetUserCommentsAdminWithDefaultParams() throws Exception {
+        List<CommentDto> comments = List.of(
+                CommentDto.builder()
+                        .id(commentId)
+                        .eventId(eventId).authorName("author")
+                        .text("Test comment")
+                        .created("2023-01-01 12:00:00")
+                        .updated("2023-01-01 12:00:00")
+                        .build());
+
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenReturn(comments);
+
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(commentId))
+                .andExpect(jsonPath("$[0].eventId").value(eventId))
+                .andExpect(jsonPath("$[0].authorName").value("author"))
+                .andExpect(jsonPath("$[0].text").value("Test comment"))
+                .andExpect(jsonPath("$[0].created").value("2023-01-01 12:00:00"))
+                .andExpect(jsonPath("$[0].updated").value("2023-01-01 12:00:00"));
+    }
+
+    @Test
+    public void shouldGetUserCommentsAdminWithCustomParams() throws Exception {
+        List<CommentDto> comments = List.of(
+                CommentDto.builder()
+                        .id(commentId)
+                        .eventId(eventId).authorName("author")
+                        .text("Test comment")
+                        .created("2023-01-01 12:00:00")
+                        .updated("2023-01-01 12:00:00")
+                        .build());
+        when(commentService.getUserComments(eq(userId), eq("ASC"), eq(5), eq(20)))
+                .thenReturn(comments);
+
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId)
+                        .param("sort", "ASC")
+                        .param("from", "5")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(commentId));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoUserCommentsAdmin() throws Exception {
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenUserDoesNotExistForGetCommentsAdmin() throws Exception {
+        when(commentService.getUserComments(eq(userId), eq("DESC"), eq(0), eq(10)))
+                .thenThrow(new NotFoundException("Пользователь с id " + userId + " не найден"));
+
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenUserIdIsNegativeForGetCommentsAdmin() throws Exception {
+        mockMvc.perform(get("/admin/users/{userId}/comment", -1))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenFromIsNegativeForGetCommentsAdmin() throws Exception {
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId)
+                        .param("from", "-5"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenSizeIsZeroForGetCommentsAdmin() throws Exception {
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId)
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenSizeIsNegativeForGetCommentsAdmin() throws Exception {
+        mockMvc.perform(get("/admin/users/{userId}/comment", userId)
+                        .param("size", "-10"))
+                .andExpect(status().isBadRequest());
     }
 }

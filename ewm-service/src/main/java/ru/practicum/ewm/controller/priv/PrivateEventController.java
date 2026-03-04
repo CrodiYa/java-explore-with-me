@@ -8,8 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.model.comment.CommentDto;
+import ru.practicum.ewm.model.comment.CommentDtoRequest;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.participation.ParticipationRequestDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.service.participation.ParticipationRequestService;
 import ru.practicum.ewm.validation.OnCreate;
@@ -25,6 +28,7 @@ public class PrivateEventController {
 
     private final EventService eventService;
     private final ParticipationRequestService prService;
+    private final CommentService commentService;
 
     @GetMapping
     public List<EventShortDto> findEventsByUserId(@PathVariable @Positive Long userId,
@@ -64,5 +68,39 @@ public class PrivateEventController {
                                                         @PathVariable @Positive Long eventId,
                                                         @RequestBody @Valid EventRequestStatusUpdateRequest request) {
         return prService.updateStatusParticipationRequest(userId, eventId, request);
+    }
+
+    @PostMapping("/{eventId}/comment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentDto addComment(@PathVariable @Positive Long userId,
+                                 @PathVariable @Positive Long eventId,
+                                 @RequestBody @Valid CommentDtoRequest text) {
+        return commentService.addComment(userId, eventId, text);
+    }
+
+    @PatchMapping("/{eventId}/comment/{commentId}")
+    public CommentDto patchComment(@PathVariable @Positive Long userId,
+                                   @PathVariable @Positive Long eventId,
+                                   @PathVariable @Positive Long commentId,
+                                   @RequestBody @Valid CommentDtoRequest text) {
+        return commentService.patchComment(userId, eventId, commentId, text);
+
+    }
+
+    @DeleteMapping("/{eventId}/comment/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable @Positive Long userId,
+                              @PathVariable @Positive Long eventId,
+                              @PathVariable @Positive Long commentId) {
+        commentService.deleteComment(userId, eventId, commentId);
+    }
+
+    @GetMapping("/comment")
+    public List<CommentDto> getUserComments(@PathVariable @Positive Long userId,
+                                            @RequestParam(defaultValue = "DESC") String sort,
+                                            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                            @RequestParam(defaultValue = "10") @Positive Integer size) {
+
+        return commentService.getUserComments(userId, sort, from, size);
     }
 }
