@@ -5,11 +5,13 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.model.event.EventDtoRequest;
 import ru.practicum.ewm.model.event.EventFullDto;
 import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 import ru.practicum.ewm.validation.OnUpdate;
 
@@ -24,15 +26,16 @@ import static ru.practicum.dto.Formatter.PATTERN;
 public class AdminEventController {
 
     private final EventService eventService;
+    private final CommentService commentService;
 
     @GetMapping
     public List<EventFullDto> findAdminEvents(@RequestParam(required = false) List<Long> users,
-                                         @RequestParam(required = false) List<EventState> states,
-                                         @RequestParam(required = false) List<Long> categories,
-                                         @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN) String rangeStart,
-                                         @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN) String rangeEnd,
-                                         @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
-                                         @RequestParam(defaultValue = "10") @Positive Integer size) {
+                                              @RequestParam(required = false) List<EventState> states,
+                                              @RequestParam(required = false) List<Long> categories,
+                                              @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN) String rangeStart,
+                                              @RequestParam(required = false) @DateTimeFormat(pattern = PATTERN) String rangeEnd,
+                                              @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                              @RequestParam(defaultValue = "10") @Positive Integer size) {
 
         return eventService.findAdminEvents(users, states, categories, rangeStart, rangeEnd, from, size);
     }
@@ -42,5 +45,13 @@ public class AdminEventController {
                                    @RequestBody @Validated(OnUpdate.class) EventDtoRequest request) {
 
         return eventService.patchAdminEvent(eventId, request);
+    }
+
+    @DeleteMapping("/{eventId}/comment/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteCommentAdmin(@PathVariable @Positive Long eventId,
+                   @PathVariable @Positive Long commentId) {
+
+        commentService.deleteCommentAdmin(eventId, commentId);
     }
 }
