@@ -70,6 +70,14 @@ public class GlobalExceptionHandler {
                 Collections.singletonMap("error", ex.getMessage()));
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiError> handleForbiddenException(ForbiddenException ex, HttpServletRequest request) {
+        logInfo(ex, request);
+        return createResponseEntity(HttpStatus.FORBIDDEN,
+                request.getRequestURI(),
+                Collections.singletonMap("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleAnyException(Exception ex,
                                                        HttpServletRequest request) {

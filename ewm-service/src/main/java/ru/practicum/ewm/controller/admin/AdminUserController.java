@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.ewm.model.comment.CommentDto;
 import ru.practicum.ewm.model.user.NewUserRequest;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.user.UserService;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.List;
 public class AdminUserController {
 
     private final UserService userService;
+    private final CommentService commentService;
 
     @GetMapping
     public List<UserDto> getUsers(@RequestParam(required = false) List<Long> ids,
@@ -38,5 +41,14 @@ public class AdminUserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable @Positive Long userId) {
         userService.deleteUser(userId);
+    }
+
+    @GetMapping("/{userId}/comment")
+    public List<CommentDto> getUserComments(@PathVariable @Positive Long userId,
+                                            @RequestParam(defaultValue = "DESC") String sort,
+                                            @RequestParam(defaultValue = "0") @PositiveOrZero Integer from,
+                                            @RequestParam(defaultValue = "10") @Positive Integer size) {
+
+        return commentService.getUserComments(userId, sort, from, size);
     }
 }

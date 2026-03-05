@@ -12,9 +12,11 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.Formatter;
 import ru.practicum.ewm.exception.GlobalExceptionHandler;
+import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.model.category.CategoryDto;
 import ru.practicum.ewm.model.event.*;
 import ru.practicum.ewm.model.user.UserDto;
+import ru.practicum.ewm.service.comment.CommentService;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.nio.charset.StandardCharsets;
@@ -25,9 +27,8 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = AdminEventController.class)
@@ -44,9 +45,13 @@ public class AdminEventControllerTest {
     @MockBean
     private EventService eventService;
 
+    @MockBean
+    private CommentService commentService;
+
     private EventFullDto eventFullDto;
     private EventDtoRequest updateRequest;
     private final Long eventId = 1L;
+    private Long commentId = 1L;
     private final String baseUrl = "/admin/events";
 
     @BeforeEach
@@ -169,6 +174,44 @@ public class AdminEventControllerTest {
         mockMvc.perform(patch(baseUrl + "/{eventId}", eventId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldDeleteCommentAdmin() throws Exception {
+        doNothing().when(commentService).deleteCommentAdmin(eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", eventId, commentId))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenDeletingNonExistentCommentAdmin() throws Exception {
+        doThrow(new NotFoundException("Комментарий с id " + commentId + " не найден"))
+                .when(commentService).deleteCommentAdmin(eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", eventId, commentId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnNotFoundWhenDeletingCommentForNonExistentEventAdmin() throws Exception {
+        doThrow(new NotFoundException("Событие с id " + eventId + " не найдено"))
+                .when(commentService).deleteCommentAdmin(eventId, commentId);
+
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", eventId, commentId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenEventIdIsNegativeForDeleteAdmin() throws Exception {
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", -1, commentId))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenCommentIdIsNegativeForDeleteAdmin() throws Exception {
+        mockMvc.perform(delete(baseUrl + "/{eventId}/comment/{commentId}", eventId, -1))
                 .andExpect(status().isBadRequest());
     }
 }
